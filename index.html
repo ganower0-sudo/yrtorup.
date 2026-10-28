@@ -405,7 +405,7 @@ const firebaseConfig = {
 const ADMIN_EMAILS = ['yaroslav.gaydaenko@gmail.com'].map(x => x.toLowerCase());
 const DEMO_PROMO_CODES = { 'YRTORUP100': 100000, 'YELLOW50': 50000 };
 function isYrtorupAdmin(user=yrtorupGoogleUser){ return !!user && ADMIN_EMAILS.includes(String(user.email||'').toLowerCase()); }
-function refreshAdminVisibility(){ const b=document.querySelector('.admin-open'); if(b) b.style.display=isYrtorupAdmin()?'':'none'; if(!isYrtorupAdmin()) { const p=document.getElementById('adminPanel'); if(p)p.classList.remove('open'); } }
+function refreshAdminVisibility(){ const allowed=isYrtorupAdmin(); const b=document.querySelector('.admin-open'); if(b) b.style.display=allowed?'inline-flex':'none'; if(!allowed) { const p=document.getElementById('adminPanel'); if(p)p.classList.remove('open'); } }
 function redeemPromoCode(){
   const input=document.getElementById('promoCodeInput'), status=document.getElementById('promoStatus');
   const code=(input?.value||'').trim().toUpperCase();
