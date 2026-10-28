@@ -185,15 +185,6 @@ input:focus,select:focus{outline:1px solid #ffe000;border-color:#ffe000}
   #upgrade .main-grid > .center { width: 100% !important; min-height: 0 !important; }
 }
 
-
-/* Hard fix for the mobile wheel overlay: hide the top label and prevent text layers from painting rectangular backgrounds. */
-@media (max-width: 760px) {
-  #wheel > .label.top { display: none !important; visibility: hidden !important; }
-  #wheel .inner { border-radius: 50% !important; overflow: hidden !important; }
-  #wheel .percent, #wheel .inner small, #wheel .chevrons, #wheel > .label { background: transparent !important; background-color: transparent !important; box-shadow: none !important; }
-  #wheel .pointer-rotor, #wheel .pointer { background-color: transparent !important; }
-}
-
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -524,13 +515,21 @@ loadCatalog().catch(err => { console.error('Ошибка загрузки кат
   .wheel-box{height:calc(min(250px,85vw) + 18px)!important}
 }
 
-/* Mobile fix: remove the black square covering the upgrade wheel center */
-@media (max-width: 760px) {
-  #upgrade .wheel .label.top { display: none !important; }
-  #upgrade .wheel .inner { z-index: 1; background: radial-gradient(circle at 50% 42%, #292b2f, #1b1c20 68%, #151619) !important; }
-  #upgrade .wheel .percent, #upgrade .wheel .inner small, #upgrade .wheel .chevrons { background: transparent !important; }
-  #upgrade .wheel .pointer-rotor { background: transparent !important; }
-}
+/* YRTORUP featured-skin layout: large visible artwork in the two top cards */
+#upgrade .main-grid{grid-template-columns:minmax(0,1fr) 270px minmax(0,1fr)!important;gap:14px!important;align-items:stretch!important}
+#upgrade .main-grid>.source,#upgrade .main-grid>.target{min-height:370px!important;height:auto!important;padding:14px!important;align-self:stretch!important}
+#upgrade .main-grid #sourceFeature,#upgrade .main-grid #targetFeature{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:10px;width:100%;min-height:285px!important;height:auto!important;margin:0 0 2px;padding:10px;background:linear-gradient(145deg,#202125,#141518);border:1px solid #33353b;border-radius:6px;overflow:hidden}
+#upgrade .main-grid #sourceFeature.empty{display:grid;place-items:center;min-height:285px!important;height:auto!important;text-align:center;padding:20px;color:#999}
+#upgrade .main-grid #sourceFeature .art,#upgrade .main-grid #targetFeature .art{width:100%!important;height:190px!important;min-height:190px;flex:0 0 190px;background:radial-gradient(ellipse,#49332188,transparent 72%);border:1px solid #34353a;border-radius:5px}
+#upgrade .main-grid #sourceFeature .art img,#upgrade .main-grid #targetFeature .art img{width:100%;height:100%;object-fit:contain;padding:8px;filter:drop-shadow(0 5px 8px #0009)}
+#upgrade .main-grid #sourceFeature>div:not(.art),#upgrade .main-grid #targetFeature>div:not(.art){width:100%;min-width:0;padding:0 2px}
+#upgrade .main-grid #sourceFeature .skin-name,#upgrade .main-grid #targetFeature .skin-name{font-size:13px;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+#upgrade .main-grid #sourceFeature .skin-price,#upgrade .main-grid #targetFeature .skin-price{font-size:17px;margin-top:7px}
+#upgrade .main-grid #targetFeature .rarity,#upgrade .main-grid #sourceFeature .rarity{font-size:9px;margin-bottom:5px}
+#upgrade .main-grid>.center{align-self:center!important;min-height:0!important;height:auto!important}
+#upgrade .selector-grid{margin-top:14px!important;gap:12px!important}
+@media(max-width:1050px){#upgrade .main-grid{grid-template-columns:minmax(0,1fr) 220px minmax(0,1fr)!important;gap:8px!important}#upgrade .main-grid>.source,#upgrade .main-grid>.target{min-height:330px!important;padding:10px!important}#upgrade .main-grid #sourceFeature,#upgrade .main-grid #targetFeature{min-height:250px!important}#upgrade .main-grid #sourceFeature .art,#upgrade .main-grid #targetFeature .art{height:155px!important;min-height:155px;flex-basis:155px}}
+@media(max-width:760px){#upgrade .main-grid{display:flex!important;flex-direction:column!important;gap:10px!important}#upgrade .main-grid>.center{order:1;width:100%!important}#upgrade .main-grid>.source{order:2;width:100%!important}#upgrade .main-grid>.target{order:3;width:100%!important}#upgrade .main-grid>.source,#upgrade .main-grid>.target{min-height:0!important}#upgrade .main-grid #sourceFeature,#upgrade .main-grid #targetFeature{min-height:0!important}#upgrade .main-grid #sourceFeature .art,#upgrade .main-grid #targetFeature .art{height:200px!important;min-height:200px;flex-basis:200px}}
 </style>
 <script>
 // Enforce the 10 ₽ floor at the final purchase boundary, even if a stale card remains rendered.
