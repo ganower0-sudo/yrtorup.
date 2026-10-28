@@ -514,6 +514,14 @@ loadCatalog().catch(err => { console.error('Ошибка загрузки кат
   .wheel{width:min(250px,85vw)!important}
   .wheel-box{height:calc(min(250px,85vw) + 18px)!important}
 }
+
+/* Mobile fix: remove the black square covering the upgrade wheel center */
+@media (max-width: 760px) {
+  #upgrade .wheel .label.top { display: none !important; }
+  #upgrade .wheel .inner { z-index: 1; background: radial-gradient(circle at 50% 42%, #292b2f, #1b1c20 68%, #151619) !important; }
+  #upgrade .wheel .percent, #upgrade .wheel .inner small, #upgrade .wheel .chevrons { background: transparent !important; }
+  #upgrade .wheel .pointer-rotor { background: transparent !important; }
+}
 </style>
 <script>
 // Enforce the 10 ₽ floor at the final purchase boundary, even if a stale card remains rendered.
