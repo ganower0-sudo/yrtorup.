@@ -185,6 +185,15 @@ input:focus,select:focus{outline:1px solid #ffe000;border-color:#ffe000}
   #upgrade .main-grid > .center { width: 100% !important; min-height: 0 !important; }
 }
 
+
+/* Hard fix for the mobile wheel overlay: hide the top label and prevent text layers from painting rectangular backgrounds. */
+@media (max-width: 760px) {
+  #wheel > .label.top { display: none !important; visibility: hidden !important; }
+  #wheel .inner { border-radius: 50% !important; overflow: hidden !important; }
+  #wheel .percent, #wheel .inner small, #wheel .chevrons, #wheel > .label { background: transparent !important; background-color: transparent !important; box-shadow: none !important; }
+  #wheel .pointer-rotor, #wheel .pointer { background-color: transparent !important; }
+}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
