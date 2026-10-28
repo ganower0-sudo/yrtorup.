@@ -310,9 +310,9 @@ const firebaseConfig = {
 };
 // Укажи здесь email Google-аккаунта владельца. Только этот email увидит кнопку админ-панели.
 // ВАЖНО: это защита только для демо-интерфейса; настоящие админ-права нужно проверять на сервере.
-const ADMIN_EMAILS = ['ЗАМЕНИ_НА_СВОЙ_EMAIL@gmail.com'].map(x => x.toLowerCase());
+const ADMIN_EMAILS = ['yaroslav.gaydaenko@gmail.com'].map(x => x.toLowerCase());
 const DEMO_PROMO_CODES = { 'YRTORUP100': 100000, 'YELLOW50': 50000 };
-function isYrtorupAdmin(user=yrtorupGoogleUser){ return !!user && ADMIN_EMAILS.includes(String(user.email||'').toLowerCase()) && !ADMIN_EMAILS[0].startsWith('ЗАМЕНИ_'); }
+function isYrtorupAdmin(user=yrtorupGoogleUser){ return !!user && ADMIN_EMAILS.includes(String(user.email||'').toLowerCase()); }
 function refreshAdminVisibility(){ const b=document.querySelector('.admin-open'); if(b) b.style.display=isYrtorupAdmin()?'':'none'; if(!isYrtorupAdmin()) { const p=document.getElementById('adminPanel'); if(p)p.classList.remove('open'); } }
 function redeemPromoCode(){
   const input=document.getElementById('promoCodeInput'), status=document.getElementById('promoStatus');
