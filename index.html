@@ -268,31 +268,44 @@ function resetFilters(){document.getElementById('marketSearch').value='';documen
 function resetDemo(){inventory=[];selectedId=null;balance=500000;history=[];renderAll();notify(' сброшено. Инвентарь пуст.');showPage('upgrade')}
 function clearHistory(){history=[];renderHistory();renderRail()}
 async function loadCatalog(){
- // Полный каталог с картинками кешируется локально на 30 дней. Внешний прайс не запрашивается.
- // Для стабильности цены демонстрационные и детерминированы по названию: одинаковы при каждом обновлении.
- const cacheKey='yrtorup-skins-images-cache-v1';
+ // Быстрый запуск: сначала мгновенный локальный кэш, если его нет — оба источника каталога запрашиваются параллельно.
+ // Картинки лениво загружаются карточками, а цены остаются фиксированными демо-ценами.
+ const cacheKey='yrtorup-skins-images-cache-v2';
  const knownPrices=new Map(seed.map(x=>[x[0].toLowerCase(),Number(x[1])]));
  const hashName=(name)=>{let h=2166136261;for(const ch of String(name)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
  const demoPrice=(name)=>{const known=knownPrices.get(String(name).toLowerCase());if(known&&known>=10)return known;return 10+(hashName(name)%499991)};
  let items=null;
- try{const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');if(cached&&Array.isArray(cached.items)&&cached.savedAt&&Date.now()-cached.savedAt<30*24*60*60*1000)items=cached.items;}catch(e){}
+ try{const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');if(cached&&Array.isArray(cached.items)&&cached.items.length&&cached.savedAt&&Date.now()-cached.savedAt<30*24*60*60*1000)items=cached.items;}catch(e){}
+ if(items) console.info('[YRTORUP] Каталог взят из кэша:',items.length,'скинов');
  if(!items){
-   for(const url of ['https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins_not_grouped.json','https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json']){
-     try{const r=await fetch(url,{cache:'force-cache'});if(!r.ok)continue;const data=await r.json();if(!Array.isArray(data))continue;items=data.filter(x=>x&&x.name&&x.image).map(x=>({name:String(x.market_hash_name||x.name).trim(),image:x.image,rarity:x.rarity?.name||'Скин CS2',type:x.weapon?.name||x.category?.name||String(x.name).split(' | ')[0]}));if(items.length){try{localStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),items}))}catch(e){}break;}}
-     catch(e){console.warn('Каталог изображений временно недоступен; используем сохранённый список.',e)}
-   }
+   console.info('[YRTORUP] Быстрая загрузка полного каталога: источники запускаются параллельно…');
+   const urls=[
+    'https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins_not_grouped.json',
+    'https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json'
+   ];
+   const attempts=urls.map(async url=>{
+    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
+    try{
+     const r=await fetch(url,{cache:'force-cache',signal:controller.signal});if(!r.ok)throw new Error('HTTP '+r.status);
+     const data=await r.json();if(!Array.isArray(data))throw new Error('Неожиданный формат каталога');
+     const parsed=data.filter(x=>x&&x.name&&x.image).map(x=>({name:String(x.market_hash_name||x.name).trim(),image:x.image,rarity:x.rarity?.name||'Скин CS2',type:x.weapon?.name||x.category?.name||String(x.name).split(' | ')[0]}));
+     if(!parsed.length)throw new Error('Каталог без скинов и картинок');
+     console.info('[YRTORUP] Источник каталога готов:',parsed.length,'скинов');return parsed;
+    }finally{clearTimeout(timer)}
+   });
+   try{items=await Promise.any(attempts)}catch(e){console.warn('[YRTORUP] Оба источника каталога недоступны; оставляем встроенные скины.',e)}
+   if(items){try{localStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),items}));console.info('[YRTORUP] Каталог сохранён в кэш на 30 дней')}catch(e){console.warn('[YRTORUP] Кэш браузера недоступен; каталог загрузится повторно при следующем запуске')}}
  }
  const byName=new Map();
- if(Array.isArray(items))for(const x of items){if(!x||!x.name||!x.image)continue;const name=x.name; if(!byName.has(name.toLowerCase()))byName.set(name.toLowerCase(),{id:'skin-'+hashName(name).toString(36),name,price:demoPrice(name),color:'gold',image:x.image,rarity:x.rarity||'Скин CS2',type:x.type||name.split(' | ')[0],wear:'',priceSource:'fixed-demo'});}
- // Сохраняем известные позиции в начале списка, но добавляем полный каталог с картинками.
+ if(Array.isArray(items))for(const x of items){if(!x||!x.name||!x.image)continue;const name=x.name;if(!byName.has(name.toLowerCase()))byName.set(name.toLowerCase(),{id:'skin-'+hashName(name).toString(36),name,price:demoPrice(name),color:'gold',image:x.image,rarity:x.rarity||'Скин CS2',type:x.type||name.split(' | ')[0],wear:'',priceSource:'fixed-demo'});}
  const full=[...seed.filter(x=>Number(x.price)>=10).map(x=>({...x,priceSource:'fixed-demo'})),...Array.from(byName.values())];
  const unique=new Map();for(const x of full){const k=x.name.toLowerCase();if(!unique.has(k)){const img=byName.get(k)?.image;if(img&&!x.image)x.image=img;unique.set(k,x)}}
  catalog=Array.from(unique.values()).filter(x=>Number(x.price)>=10);
  if(!catalog.length)catalog=seed.filter(x=>Number(x.price)>=10).map(x=>({...x,priceSource:'fixed-demo'}));
  if(!targetId||!catalog.some(x=>x.id===targetId))targetId=catalog.find(x=>x.price>=10)?.id||catalog[0].id;
  if(selectedId&&!inventory.some(x=>x.id===selectedId))selectedId=null;
- const status=document.getElementById('priceStatus');if(status)status.textContent=`Каталог: ${catalog.length} скинов · картинки кешируются на 30 дней · фиксированные демо-цены · внешний прайс отключён.`;
- window.marketCsgoPricesLoaded=false;renderAll();
+ const status=document.getElementById('priceStatus');if(status)status.textContent=`Каталог: ${catalog.length} скинов · кэш 30 дней · фиксированные демо-цены · параллельная загрузка картинок`;
+ window.marketCsgoPricesLoaded=false;renderAll();console.info('[YRTORUP] Готово:',catalog.length,'скинов в каталоге');
 }
 
 function normalizeSkinName(name){
