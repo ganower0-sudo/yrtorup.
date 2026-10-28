@@ -1,0 +1,12 @@
+{
+  "name": "yrtorup",
+  "version": "1.0.0",
+  "private": true,
+  "description": "YRTORUP CS2 skins website",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
