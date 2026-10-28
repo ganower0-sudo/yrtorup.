@@ -333,37 +333,50 @@ function updateGoogleHeader(user) {
   }
 }
 async function handleGoogleButton() {
-  // Если пользователь уже вошёл, нажатие на аватарку только открывает профиль.
-  // Выход из Google-аккаунта через аватарку больше не предлагается.
+  // Авторизован: открыть профиль, не выходить из аккаунта.
   if (yrtorupGoogleUser) {
     showPage('profilePage');
     return;
   }
 
   if (!window.firebase || !firebase.apps || !firebase.apps.length) {
-    notify('Firebase не загрузился. Проверь подключение к интернету и обнови страницу.');
+    notify('Не удалось загрузить Google-вход. Обнови страницу; если ошибка повторится, проверь подключение к Firebase.');
     return;
   }
 
+  const auth = firebase.auth();
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
   try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    // Redirect-вход работает и в браузерах, которые блокируют всплывающие окна.
-    await firebase.auth().signInWithRedirect(provider);
+    // Сначала пробуем всплывающее окно. Если браузер его блокирует,
+    // используем перенаправление на Google.
+    await auth.signInWithPopup(provider);
   } catch (e) {
+    console.warn('Google popup sign-in:', e);
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/operation-not-supported-in-this-environment') {
+      try {
+        await auth.signInWithRedirect(provider);
+        return;
+      } catch (redirectError) {
+        e = redirectError;
+      }
+    }
     console.error('Google sign-in error:', e);
     if (e.code === 'auth/unauthorized-domain') {
-      notify('Домен сайта не разрешён в Firebase Authentication. Добавь yrtorup.onrender.com в авторизованные домены.');
+      notify('Домен не разрешён в Firebase. Добавь yrtorup.onrender.com в Authentication → Settings → Authorized domains.');
+    } else if (e.code === 'auth/operation-not-allowed') {
+      notify('В Firebase не включён вход через Google: Authentication → Sign-in method → Google.');
     } else {
-      notify('Не удалось войти через Google: ' + (e.message || e));
+      notify('Ошибка Google-входа: ' + (e.message || e));
     }
   }
 }
+
 function initYrtorupFirebaseAuth() {
   try {
     if (!window.firebase) { console.error('Firebase SDK scripts did not load.'); return; }
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    firebase.auth().getRedirectResult().catch(e => console.warn('Google redirect result:', e));
+    firebase.auth().getRedirectResult().catch(e => { console.warn('Google redirect result:', e); if (e.code === 'auth/unauthorized-domain') notify('Домен yrtorup.onrender.com не разрешён в Firebase Authentication.'); else notify('Ошибка возврата из Google: ' + (e.message || e)); });
     firebase.auth().onAuthStateChanged(user => {
       updateGoogleHeader(user);
       if (user) {
