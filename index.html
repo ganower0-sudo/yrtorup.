@@ -268,44 +268,64 @@ function resetFilters(){document.getElementById('marketSearch').value='';documen
 function resetDemo(){inventory=[];selectedId=null;balance=500000;history=[];renderAll();notify(' сброшено. Инвентарь пуст.');showPage('upgrade')}
 function clearHistory(){history=[];renderHistory();renderRail()}
 async function loadCatalog(){
- // Быстрый запуск: сначала мгновенный локальный кэш, если его нет — оба источника каталога запрашиваются параллельно.
- // Картинки лениво загружаются карточками, а цены остаются фиксированными демо-ценами.
- const cacheKey='yrtorup-skins-images-cache-v2';
- const knownPrices=new Map(seed.map(x=>[x[0].toLowerCase(),Number(x[1])]));
- const hashName=(name)=>{let h=2166136261;for(const ch of String(name)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
- const demoPrice=(name)=>{const known=knownPrices.get(String(name).toLowerCase());if(known&&known>=10)return known;return 10+(hashName(name)%499991)};
- let items=null;
- try{const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');if(cached&&Array.isArray(cached.items)&&cached.items.length&&cached.savedAt&&Date.now()-cached.savedAt<30*24*60*60*1000)items=cached.items;}catch(e){}
- if(items) console.info('[YRTORUP] Каталог взят из кэша:',items.length,'скинов');
- if(!items){
-   console.info('[YRTORUP] Быстрая загрузка полного каталога: источники запускаются параллельно…');
-   const urls=[
-    'https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins_not_grouped.json',
-    'https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json'
-   ];
-   const attempts=urls.map(async url=>{
-    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
-    try{
-     const r=await fetch(url,{cache:'force-cache',signal:controller.signal});if(!r.ok)throw new Error('HTTP '+r.status);
-     const data=await r.json();if(!Array.isArray(data))throw new Error('Неожиданный формат каталога');
-     const parsed=data.filter(x=>x&&x.name&&x.image).map(x=>({name:String(x.market_hash_name||x.name).trim(),image:x.image,rarity:x.rarity?.name||'Скин CS2',type:x.weapon?.name||x.category?.name||String(x.name).split(' | ')[0]}));
-     if(!parsed.length)throw new Error('Каталог без скинов и картинок');
-     console.info('[YRTORUP] Источник каталога готов:',parsed.length,'скинов');return parsed;
-    }finally{clearTimeout(timer)}
-   });
-   try{items=await Promise.any(attempts)}catch(e){console.warn('[YRTORUP] Оба источника каталога недоступны; оставляем встроенные скины.',e)}
-   if(items){try{localStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),items}));console.info('[YRTORUP] Каталог сохранён в кэш на 30 дней')}catch(e){console.warn('[YRTORUP] Кэш браузера недоступен; каталог загрузится повторно при следующем запуске')}}
+ const status=document.getElementById('priceStatus');
+ if(status)status.textContent='Быстро загружаем каталог CS2 и актуальные цены с сервера…';
+ const cacheKey='yrtorup-skins-images-cache-v3';
+ const imageByExact=new Map(),imageByBase=new Map();
+ let gameItems=[];
+ // Изображения/названия кэшируются отдельно от цен: цены всегда запрашиваются заново с сервера.
+ let cached=null;
+ try{const c=JSON.parse(localStorage.getItem(cacheKey)||'null');if(c&&Array.isArray(c.items)&&c.items.length&&c.savedAt&&Date.now()-c.savedAt<30*24*60*60*1000)cached=c.items;}catch(e){}
+ const catalogTask=(async()=>{
+  if(cached){console.info('[YRTORUP] Каталог изображений из кэша:',cached.length);gameItems=cached;return;}
+  const urls=[
+   'https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins_not_grouped.json',
+   'https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json'
+  ];
+  const attempts=urls.map(async url=>{
+   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+   try{const r=await fetch(url,{cache:'force-cache',signal:controller.signal});if(!r.ok)throw new Error('HTTP '+r.status);const data=await r.json();if(!Array.isArray(data))throw new Error('Неверный формат каталога');const parsed=data.filter(x=>x&&x.name&&x.image).map(x=>({name:String(x.market_hash_name||x.name).trim(),image:x.image,rarity:x.rarity?.name||'Скин CS2',type:x.weapon?.name||x.category?.name||String(x.name).split(' | ')[0]}));if(!parsed.length)throw new Error('Пустой каталог');return parsed;}finally{clearTimeout(timer)}
+  });
+  try{gameItems=await Promise.any(attempts);try{localStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),items:gameItems}));console.info('[YRTORUP] Кэш изображений обновлён:',gameItems.length)}catch(e){console.warn('[YRTORUP] Не удалось сохранить кэш изображений',e)}}catch(e){console.warn('[YRTORUP] Не удалось загрузить каталог картинок',e);gameItems=seed.filter(x=>x.image).map(x=>({name:x.name,image:x.image,rarity:x.rarity||'Скин CS2',type:x.type||x.name.split(' | ')[0]}));}
+ })();
+ const priceTask=(async()=>{
+  const prices=new Map();let updatedAt=null;
+  // Это настоящий endpoint сервера проекта; цены не генерируются и не подменяются демо-значениями.
+  for(const url of ['/api/prices/RUB.json']){
+   try{
+    const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();if(data?.success===false||!data?.items)throw new Error('Сервер вернул неподдерживаемый формат прайса');
+    updatedAt=Number(data.time)||null;window.__marketPriceFormat=Array.isArray(data.format)?Object.fromEntries(data.format.map((k,i)=>[k,i])):{};
+    const add=(item,fallbackName='')=>{if(!item)return;let name='',raw;if(Array.isArray(item)){const fmt=window.__marketPriceFormat||{};name=item[fmt.market_hash_name]||'';raw=item[fmt.price];if(!name&&item.length>=3){name=item[2];raw=item[0]}}else if(typeof item==='object'){name=item.market_hash_name||item.name||item.hash_name||fallbackName||'';raw=item.price}else if(fallbackName){name=fallbackName;raw=item}name=String(name||'').trim();const price=Number(String(raw??'').replace(/\s/g,'').replace(',','.'));if(!name||!Number.isFinite(price)||price<=0)return;const key=name.toLowerCase(),prev=prices.get(key);if(!prev||price<prev.price)prices.set(key,{price,name});};
+    const items=data.items;
+    if(Array.isArray(items)){if(items.length&&Array.isArray(items[0]))items.forEach(x=>add(x));else if(items.length&&typeof items[0]==='object')items.forEach(x=>add(x));else if(items.length&&data.format?.length){const w=data.format.length;for(let i=0;i+w<=items.length;i+=w)add(items.slice(i,i+w));}}
+    else if(typeof items==='object')for(const [k,v] of Object.entries(items))add(v,k);
+    console.info('[YRTORUP] Актуальный прайс с сервера получен:',prices.size,'позиций');return {prices,updatedAt,ok:prices.size>0};
+   }catch(e){console.warn('[YRTORUP] Не удалось получить актуальные цены с сервера:',e);}
+  }
+  return {prices,updatedAt:null,ok:false};
+ })();
+ // Запросы каталога и прайса идут одновременно — не ждём окончания одного перед запуском другого.
+ const [,priceResult]=await Promise.all([catalogTask,priceTask]);
+ const prices=priceResult.prices,updatedAt=priceResult.updatedAt;
+ const imageMap=new Map();for(const x of gameItems){if(!x||!x.name)continue;const key=String(x.name).toLowerCase();if(x.image)imageMap.set(key,x.image);const base=normalizeSkinName(x.name);if(x.image&&!imageByBase.has(base))imageByBase.set(base,x.image);}
+ const merged=new Map();
+ for(const x of gameItems){
+  const name=String(x.market_hash_name||x.name).trim(),key=name.toLowerCase(),match=prices.get(key),base=normalizeSkinName(name);
+  const image=x.image||imageMap.get(key)||imageByBase.get(base)||'';
+  const rarity=x.rarity||'Предмет CS2';
+  const color=/Contraband|Covert|Тайное/i.test(rarity)?'red':/Classified|Засекреченное/i.test(rarity)?'purple':/Restricted|Запрещенное/i.test(rarity)?'pink':/Mil-Spec|Армейское/i.test(rarity)?'blue':'orange';
+  merged.set(key,{id:'game-'+key.replace(/[^a-z0-9]+/g,'-'),name,price:match?match.price:0,color,image,rarity,type:x.type||name.split(' | ')[0]||'Предмет',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:match?'market-csgo':'unavailable',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});
  }
- const byName=new Map();
- if(Array.isArray(items))for(const x of items){if(!x||!x.name||!x.image)continue;const name=x.name;if(!byName.has(name.toLowerCase()))byName.set(name.toLowerCase(),{id:'skin-'+hashName(name).toString(36),name,price:demoPrice(name),color:'gold',image:x.image,rarity:x.rarity||'Скин CS2',type:x.type||name.split(' | ')[0],wear:'',priceSource:'fixed-demo'});}
- const full=[...seed.filter(x=>Number(x.price)>=10).map(x=>({...x,priceSource:'fixed-demo'})),...Array.from(byName.values())];
- const unique=new Map();for(const x of full){const k=x.name.toLowerCase();if(!unique.has(k)){const img=byName.get(k)?.image;if(img&&!x.image)x.image=img;unique.set(k,x)}}
- catalog=Array.from(unique.values()).filter(x=>Number(x.price)>=10);
- if(!catalog.length)catalog=seed.filter(x=>Number(x.price)>=10).map(x=>({...x,priceSource:'fixed-demo'}));
- if(!targetId||!catalog.some(x=>x.id===targetId))targetId=catalog.find(x=>x.price>=10)?.id||catalog[0].id;
+ for(const [key,match] of prices){if(merged.has(key))continue;const name=match.name,base=normalizeSkinName(name),image=imageMap.get(key)||imageByBase.get(base)||'';merged.set(key,{id:'market-'+key.replace(/[^a-z0-9]+/g,'-'),name,price:match.price,color:'orange',image,rarity:'Предмет CS2',type:name.split(' | ')[0]||'Предмет',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:'market-csgo',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});}
+ // Если сервер временно недоступен, показываем каталог, но не придумываем цены.
+ catalog=[...merged.values()].sort((a,b)=>a.name.localeCompare(b.name,'en'));
+ if(!catalog.length)catalog=seed.map(x=>({...x,price:0,priceSource:'unavailable'}));
+ if(!targetId||!catalog.some(x=>x.id===targetId))targetId=catalog.find(x=>x.image&&x.price>=10)?.id||catalog.find(x=>x.image)?.id||catalog[0].id;
  if(selectedId&&!inventory.some(x=>x.id===selectedId))selectedId=null;
- const status=document.getElementById('priceStatus');if(status)status.textContent=`Каталог: ${catalog.length} скинов · кэш 30 дней · фиксированные демо-цены · параллельная загрузка картинок`;
- window.marketCsgoPricesLoaded=false;renderAll();console.info('[YRTORUP] Готово:',catalog.length,'скинов в каталоге');
+ const priced=catalog.filter(x=>x.price>=10).length,imgs=catalog.filter(x=>x.image).length;
+ if(status)status.textContent=`Каталог: ${catalog.length.toLocaleString('ru-RU')} предметов · картинок ${imgs.toLocaleString('ru-RU')} · актуальные цены с сервера ${priced.toLocaleString('ru-RU')}${updatedAt?' · обновлено '+new Date(updatedAt*1000).toLocaleString('ru-RU'):''}${priceResult.ok?'':' · сервер цен временно недоступен'}.`;
+ window.marketCsgoPricesLoaded=priceResult.ok;renderAll();console.info('[YRTORUP] Каталог готов:',catalog.length,'предметов; с серверной ценой:',priced);
 }
 
 function normalizeSkinName(name){
