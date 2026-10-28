@@ -162,24 +162,27 @@ input:focus,select:focus{outline:1px solid #ffe000;border-color:#ffe000}
   .market-body h3 { font-size:9px; }
 }
 
-/* FIX: убрать большие пустые тёмные прямоугольники под карточками скинов на ПК и телефоне */
-@media (min-width: 761px) {
-  #upgrade .main-grid { align-items: start !important; }
-  #upgrade .main-grid > .source,
-  #upgrade .main-grid > .target {
-    align-self: start !important;
-    height: auto !important;
-    min-height: 0 !important;
-  }
-  #upgrade .main-grid > .source #sourceFeature { height: auto !important; min-height: 100px !important; }
-  #upgrade .main-grid > .target #targetFeature { min-height: 0 !important; }
+
+/* FIX v2: убираем пустые тёмные прямоугольники под карточками исходного и целевого скина */
+#upgrade .main-grid { align-items: start !important; }
+#upgrade .main-grid > .source,
+#upgrade .main-grid > .target {
+  min-height: 0 !important;
+  height: max-content !important;
+  align-self: start !important;
+  padding-bottom: 10px !important;
 }
+#upgrade .main-grid > .center {
+  min-height: 0 !important;
+  align-self: start !important;
+}
+#upgrade .main-grid #sourceFeature { height: auto !important; min-height: 90px !important; }
+#upgrade .main-grid #targetFeature { min-height: 90px !important; }
 @media (max-width: 760px) {
-  #upgrade .main-grid { align-items: stretch !important; }
+  #upgrade .main-grid { display: flex !important; flex-direction: column !important; align-items: stretch !important; }
   #upgrade .main-grid > .source,
-  #upgrade .main-grid > .target { height: auto !important; min-height: 0 !important; }
-  #upgrade .main-grid > .source #sourceFeature { height: auto !important; min-height: 90px !important; }
-  #upgrade .main-grid > .target #targetFeature { min-height: 0 !important; }
+  #upgrade .main-grid > .target { width: 100% !important; height: max-content !important; min-height: 0 !important; }
+  #upgrade .main-grid > .center { width: 100% !important; min-height: 0 !important; }
 }
 
 </style>
