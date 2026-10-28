@@ -397,9 +397,9 @@ let yrtorupGoogleUser = null;
 let yrtorupDb=null, globalFeedUnsub=null;
 function publicName(){return (yrtorupGoogleUser?.displayName||yrtorupGoogleUser?.email||profile.nick||'Игрок').toString().slice(0,48)}
 function firestoreReady(){return !!(window.firebase&&firebase.apps.length&&yrtorupDb)}
-function renderGlobalFeed(items){const el=document.getElementById('globalHistoryPage');if(!el)return;window.__yrtorupPublicFeedItems=items||[];el.innerHTML=items.length?items.map((h,i)=>`<button type="button" class="under public-feed-card" onclick="openPublicDrop(${i})" style="width:100%;text-align:left;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;color:inherit"><img src="${escapeHtml(h.win?(h.toImage||''):(h.fromImage||''))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" style="width:58px;height:48px;object-fit:contain;flex-shrink:0"><span style="flex:1;min-width:0"><b>${escapeHtml(h.player||'Игрок')}</b><br><span>${escapeHtml(h.from||'Скин')} → ${escapeHtml(h.to||'Неудача')}</span><br><small>Шанс ${Number(h.chance||0).toFixed(1)}% · нажми, чтобы посмотреть дроп</small></span><strong style="color:${h.win?'var(--yellow)':'#f07878'};white-space:nowrap">${h.win?'УСПЕХ':'НЕУДАЧА'}</strong></button>`).join(''):'<div class="empty-big">Пока нет публичных апгрейдов.</div>';}
-window.openPublicDrop=function(index){const h=(window.__yrtorupPublicFeedItems||[])[Number(index)];if(!h)return;const modal=document.getElementById('publicDropModal');if(!modal)return;const image=document.getElementById('publicDropImage');image.src=h.win?(h.toImage||''):(h.fromImage||'');image.style.display=image.src?'block':'none';document.getElementById('publicDropName').textContent=h.win?(h.to||h.targetName||'Выигранный предмет'):(h.from||'Исходный предмет');document.getElementById('publicDropSub').textContent=`Игрок: ${h.player||'Игрок'} · ${h.win?'Цена дропа: '+(h.toPrice?money(h.toPrice):'не указана'):'Цена исходного предмета: '+(h.fromPrice?money(h.fromPrice):'не указана')}`;document.getElementById('publicDropResult').textContent=h.win?'УСПЕШНЫЙ АПГРЕЙД':'НЕУДАЧНЫЙ АПГРЕЙД';document.getElementById('publicDropResult').style.color=h.win?'var(--yellow)':'#f07878';document.getElementById('publicDropAttempt').textContent=`${h.from||'Скин'} → ${h.targetName||h.to||'Целевой скин'} · шанс ${Number(h.chance||0).toFixed(1)}%`;modal.classList.add('open');modal.setAttribute('aria-hidden','false');}
-window.closePublicDrop=function(){const m=document.getElementById('publicDropModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}}
+function renderGlobalFeed(items){const el=document.getElementById('globalHistoryPage');if(!el)return;window.__yrtorupPublicFeedItems=items||[];el.innerHTML=items.length?items.map((h,i)=>`<button type="button" class="under public-feed-card" data-drop-index="${i}" onclick="openPublicDrop(${i})" style="width:100%;text-align:left;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;color:inherit"><img src="${escapeHtml(h.win?(h.toImage||''):(h.fromImage||''))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" style="width:58px;height:48px;object-fit:contain;flex-shrink:0"><span style="flex:1;min-width:0"><b>${escapeHtml(h.player||'Игрок')}</b><br><span>${escapeHtml(h.from||'Скин')} → ${escapeHtml(h.to||'Неудача')}</span><br><small>Шанс ${Number(h.chance||0).toFixed(1)}% · нажми, чтобы посмотреть дроп</small></span><strong style="color:${h.win?'var(--yellow)':'#f07878'};white-space:nowrap">${h.win?'УСПЕХ':'НЕУДАЧА'}</strong></button>`).join(''):'<div class="empty-big">Пока нет публичных апгрейдов.</div>';}
+window.openPublicDrop=function(index){const h=(window.__yrtorupPublicFeedItems||[])[Number(index)];if(!h)return;const modal=document.getElementById('publicDropModal');if(!modal)return;const image=document.getElementById('publicDropImage');image.src=h.win?(h.toImage||''):(h.fromImage||'');image.style.display=image.src?'block':'none';document.getElementById('publicDropName').textContent=h.win?(h.to||h.targetName||'Выигранный предмет'):(h.from||'Исходный предмет');document.getElementById('publicDropSub').textContent=`Игрок: ${h.player||'Игрок'} · ${h.win?'Цена дропа: '+(h.toPrice?money(h.toPrice):'не указана'):'Цена исходного предмета: '+(h.fromPrice?money(h.fromPrice):'не указана')}`;document.getElementById('publicDropResult').textContent=h.win?'УСПЕШНЫЙ АПГРЕЙД':'НЕУДАЧНЫЙ АПГРЕЙД';document.getElementById('publicDropResult').style.color=h.win?'var(--yellow)':'#f07878';document.getElementById('publicDropAttempt').textContent=`${h.from||'Скин'} → ${h.targetName||h.to||'Целевой скин'} · шанс ${Number(h.chance||0).toFixed(1)}%`;modal.classList.add('open');modal.style.display='flex';modal.setAttribute('aria-hidden','false');}
+window.closePublicDrop=function(){const m=document.getElementById('publicDropModal');if(m){m.classList.remove('open');m.style.display='none';m.setAttribute('aria-hidden','true');}}
 
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function startGlobalFeed(){if(!firestoreReady())return;try{if(globalFeedUnsub)globalFeedUnsub();globalFeedUnsub=yrtorupDb.collection('publicUpgrades').orderBy('createdAt','desc').limit(30).onSnapshot(s=>{renderGlobalFeed(s.docs.map(d=>d.data()));const st=document.getElementById('globalFeedStatus');if(st)st.textContent='Общая лента · онлайн';},e=>{console.warn(e);const st=document.getElementById('globalFeedStatus');if(st)st.textContent='Настройте правила Firestore';});}catch(e){console.warn(e)}}
@@ -563,23 +563,24 @@ loadCatalog().catch(err => { console.error('Ошибка загрузки кат
 </script>
 <style>.public-feed-card{background:linear-gradient(110deg,rgba(255,221,0,.055),rgba(255,255,255,.018));border:1px solid #303136;border-radius:10px;padding:10px;transition:border-color .15s,transform .15s}.public-feed-card:hover{border-color:#ffe000;transform:translateY(-1px)}.public-feed-card img{background:rgba(0,0,0,.16);border-radius:7px}.public-drop-modal{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(5px)}.public-drop-modal.open{display:flex}.public-drop-card{position:relative;width:min(430px,100%);background:#17181b;border:1px solid #44454b;border-radius:16px;padding:22px;color:#f4f4f4;box-shadow:0 24px 80px rgba(0,0,0,.55);text-align:center}.public-drop-card .drop-x{position:absolute;right:10px;top:8px;background:#292a2f;color:white;border:0;border-radius:8px;padding:6px 10px;font-size:20px}.public-drop-card img{width:100%;height:190px;object-fit:contain;margin:10px auto;background:radial-gradient(ellipse,rgba(255,224,0,.10),transparent 68%)}.public-drop-card h3{margin:10px 0;color:#ffe000;font-size:19px;overflow-wrap:anywhere}.public-drop-card p{color:#b7b7bf;font-size:12px;line-height:1.5}.public-drop-card .drop-result{font-weight:900;letter-spacing:1px;margin-top:14px}</style><div class="public-drop-modal" id="publicDropModal" aria-hidden="true" onclick="if(event.target===this)closePublicDrop()"><div class="public-drop-card" role="dialog" aria-modal="true" aria-labelledby="publicDropName"><button class="drop-x" type="button" onclick="closePublicDrop()" aria-label="Закрыть">×</button><div id="publicDropResult" class="drop-result">ДРОП</div><img id="publicDropImage" alt="Изображение скина" style="display:none"><h3 id="publicDropName">Скин</h3><p id="publicDropSub"></p><p id="publicDropAttempt"></p><button type="button" onclick="closePublicDrop()" style="background:#ffe000;color:#111;border:0;border-radius:9px;padding:10px 20px;font-weight:900">ЗАКРЫТЬ</button></div></div>
 
-<script id="yrtorup-click-fix">
-// Ensure global drop cards respond even if inline handlers are blocked by the hosting/browser setup.
+<script id="yrtorup-click-fix-v2">
 (function(){
-  const feed=document.getElementById('globalHistoryPage');
-  if(feed){
-    feed.style.pointerEvents='auto';
-    feed.addEventListener('click',function(ev){
-      const card=ev.target.closest('.public-feed-card');
-      if(!card)return;
-      const m=card.getAttribute('onclick')||'';
-      const match=m.match(/openPublicDrop\((\d+)\)/);
-      if(match&&typeof window.openPublicDrop==='function'){ev.preventDefault();window.openPublicDrop(Number(match[1]));}
-    });
-  }
-  const modal=document.getElementById('publicDropModal');
-  if(modal){modal.style.pointerEvents='auto';}
-  window.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&typeof window.closePublicDrop==='function')window.closePublicDrop();});
+  // Delegate from document so dynamically-rendered feed cards remain clickable.
+  document.addEventListener('click', function(ev){
+    const card = ev.target && ev.target.closest ? ev.target.closest('#globalHistoryPage .public-feed-card') : null;
+    if (!card) return;
+    const raw = card.getAttribute('data-drop-index');
+    const match = (card.getAttribute('onclick') || '').match(/openPublicDrop\((\d+)\)/);
+    const index = raw !== null ? Number(raw) : (match ? Number(match[1]) : NaN);
+    if (Number.isInteger(index) && typeof window.openPublicDrop === 'function') {
+      ev.preventDefault();
+      ev.stopPropagation();
+      window.openPublicDrop(index);
+    }
+  }, true);
+  document.addEventListener('keydown', function(ev){
+    if (ev.key === 'Escape' && typeof window.closePublicDrop === 'function') window.closePublicDrop();
+  });
 })();
 </script>
 
