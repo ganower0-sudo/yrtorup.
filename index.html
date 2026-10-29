@@ -372,6 +372,17 @@ async function loadCatalog(){
   merged.set(key,{id:(x.itemKind==='sticker'?'sticker-':'game-')+key.replace(/[^a-z0-9]+/g,'-'),name,price:match?match.price:0,color,image,rarity,type:x.type||name.split(' | ')[0]||'Предмет',itemKind:x.itemKind||'skin',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:match?'market-csgo':'unavailable',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});
  }
  for(const [key,match] of prices){if(merged.has(key))continue;const name=match.name;if(/(graffiti|spray|граффити|графити)/i.test(name))continue;const base=normalizeSkinName(name),image=imageMap.get(key)||imageMap.get(key.replace(/^sticker\s*\|\s*/i,''))||imageByBase.get(base)||imageByBase.get(normalizeSkinName(name.replace(/^sticker\s*\|\s*/i,'')))||'';merged.set(key,{id:'market-'+key.replace(/[^a-z0-9]+/g,'-'),name,price:match.price,color:'orange',image,rarity:'Предмет CS2',type:name.split(' | ')[0]||'Предмет',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:'market-csgo',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});}
+ // Гарантируем наличие рубиновых Doppler-ножей в каталоге даже если источник каталога неполный.
+ // Цены не выдумываем: если сервер прайса не прислал цену, показываем «цена недоступна».
+ const rubyKnifeModels=['Bayonet','Bowie Knife','Butterfly Knife','Falchion Knife','Flip Knife','Gut Knife','Huntsman Knife','Karambit','Kukri Knife','M9 Bayonet','Navaja Knife','Shadow Daggers','Stiletto Knife','Talon Knife','Ursus Knife'];
+ for(const model of rubyKnifeModels){
+  const name=`★ ${model} | Doppler (Ruby)`,key=name.toLowerCase();
+  if(merged.has(key))continue;
+  const priceMatch=prices.get(key);
+  const imageCandidates=[...gameItems].filter(x=>x.image&&new RegExp(model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.name)&&/doppler/i.test(x.name));
+  const image=imageCandidates[0]?.image||'';
+  merged.set(key,{id:'ruby-'+key.replace(/[^a-z0-9]+/g,'-'),name,price:priceMatch?.price||0,color:'red',image,rarity:'Тайное',type:model,itemKind:'skin',wear:'Ruby',priceSource:priceMatch?'market-csgo':'unavailable',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});
+ }
  // Если сервер временно недоступен, показываем каталог, но не придумываем цены.
  catalog=[...merged.values()].sort((a,b)=>a.name.localeCompare(b.name,'en'));
  if(!catalog.length)catalog=seed.map(x=>({...x,price:0,priceSource:'unavailable'}));
