@@ -307,7 +307,7 @@ function clearHistory(){history=[];renderHistory();renderRail()}
 async function loadCatalog(){
  const status=document.getElementById('priceStatus');
  if(status)status.textContent='Быстро загружаем каталог CS2 и актуальные цены с сервера…';
- const cacheKey='yrtorup-skins-images-cache-v5-no-graffiti';
+ const cacheKey='yrtorup-skins-images-cache-v6-stickers-no-graffiti';
  const imageByExact=new Map(),imageByBase=new Map();
  let gameItems=[];
  // Изображения/названия кэшируются отдельно от цен: цены всегда запрашиваются заново с сервера.
@@ -326,7 +326,7 @@ async function loadCatalog(){
     const r=await fetch(source.url,{cache:'force-cache',signal:controller.signal});if(!r.ok)throw new Error('HTTP '+r.status);
     const data=await r.json();if(!Array.isArray(data))throw new Error('Неверный формат каталога');
     const parsed=data.filter(x=>x&&x.name&&!/(graffiti|spray|граффити|графити)/i.test(String(x.name))&&(x.image||x.images?.[0])).map(x=>({
-     name:String(x.market_hash_name||x.name).trim(),image:x.image||x.images?.[0]||'',
+     name:(source.kind==='sticker'&&!/^sticker\s*\|/i.test(String(x.market_hash_name||x.name))?'Sticker | ':'')+String(x.market_hash_name||x.name).trim(),image:x.image||x.images?.[0]||'',
      rarity:x.rarity?.name||(source.kind==='sticker'?'Наклейка CS2':'Скин CS2'),
      type:source.kind==='sticker'?'Наклейка':(x.weapon?.name||x.category?.name||String(x.name).split(' | ')[0]),
      itemKind:source.kind
@@ -362,16 +362,16 @@ async function loadCatalog(){
  // Запросы каталога и прайса идут одновременно — не ждём окончания одного перед запуском другого.
  const [,priceResult]=await Promise.all([catalogTask,priceTask]);
  const prices=priceResult.prices,updatedAt=priceResult.updatedAt;
- const imageMap=new Map();for(const x of gameItems){if(!x||!x.name)continue;const key=String(x.name).toLowerCase();if(x.image)imageMap.set(key,x.image);const base=normalizeSkinName(x.name);if(x.image&&!imageByBase.has(base))imageByBase.set(base,x.image);}
+ const imageMap=new Map();for(const x of gameItems){if(!x||!x.name)continue;const key=String(x.name).toLowerCase();if(x.image){imageMap.set(key,x.image);imageMap.set(key.replace(/^sticker\s*\|\s*/,''),x.image);}const base=normalizeSkinName(x.name);if(x.image&&!imageByBase.has(base))imageByBase.set(base,x.image);const baseNoSticker=normalizeSkinName(x.name.replace(/^sticker\s*\|\s*/i,''));if(x.image&&!imageByBase.has(baseNoSticker))imageByBase.set(baseNoSticker,x.image);}
  const merged=new Map();
  for(const x of gameItems){
   const name=String(x.market_hash_name||x.name).trim();if(/(graffiti|spray|граффити|графити)/i.test(name))continue;const key=name.toLowerCase(),match=prices.get(key),base=normalizeSkinName(name);
-  const image=x.image||imageMap.get(key)||imageByBase.get(base)||'';
+  const image=x.image||imageMap.get(key)||imageMap.get(key.replace(/^sticker\s*\|\s*/i,''))||imageByBase.get(base)||imageByBase.get(normalizeSkinName(name.replace(/^sticker\s*\|\s*/i,'')))||'';
   const rarity=x.rarity||'Предмет CS2';
   const color=/Contraband|Covert|Тайное/i.test(rarity)?'red':/Classified|Засекреченное/i.test(rarity)?'purple':/Restricted|Запрещенное/i.test(rarity)?'pink':/Mil-Spec|Армейское/i.test(rarity)?'blue':'orange';
   merged.set(key,{id:(x.itemKind==='sticker'?'sticker-':'game-')+key.replace(/[^a-z0-9]+/g,'-'),name,price:match?match.price:0,color,image,rarity,type:x.type||name.split(' | ')[0]||'Предмет',itemKind:x.itemKind||'skin',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:match?'market-csgo':'unavailable',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});
  }
- for(const [key,match] of prices){if(merged.has(key))continue;const name=match.name;if(/(graffiti|spray|граффити|графити)/i.test(name))continue;const base=normalizeSkinName(name),image=imageMap.get(key)||imageByBase.get(base)||'';merged.set(key,{id:'market-'+key.replace(/[^a-z0-9]+/g,'-'),name,price:match.price,color:'orange',image,rarity:'Предмет CS2',type:name.split(' | ')[0]||'Предмет',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:'market-csgo',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});}
+ for(const [key,match] of prices){if(merged.has(key))continue;const name=match.name;if(/(graffiti|spray|граффити|графити)/i.test(name))continue;const base=normalizeSkinName(name),image=imageMap.get(key)||imageMap.get(key.replace(/^sticker\s*\|\s*/i,''))||imageByBase.get(base)||imageByBase.get(normalizeSkinName(name.replace(/^sticker\s*\|\s*/i,'')))||'';merged.set(key,{id:'market-'+key.replace(/[^a-z0-9]+/g,'-'),name,price:match.price,color:'orange',image,rarity:'Предмет CS2',type:name.split(' | ')[0]||'Предмет',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:'market-csgo',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});}
  // Если сервер временно недоступен, показываем каталог, но не придумываем цены.
  catalog=[...merged.values()].sort((a,b)=>a.name.localeCompare(b.name,'en'));
  if(!catalog.length)catalog=seed.map(x=>({...x,price:0,priceSource:'unavailable'}));
