@@ -307,7 +307,7 @@ function clearHistory(){history=[];renderHistory();renderRail()}
 async function loadCatalog(){
  const status=document.getElementById('priceStatus');
  if(status)status.textContent='Быстро загружаем каталог CS2 и актуальные цены с сервера…';
- const cacheKey='yrtorup-skins-images-cache-v7-stickers-ruby-no-graffiti';
+ const cacheKey='yrtorup-skins-images-cache-v8-exact-ruby-images-no-graffiti';
  const imageByExact=new Map(),imageByBase=new Map();
  let gameItems=[];
  // Изображения/названия кэшируются отдельно от цен: цены всегда запрашиваются заново с сервера.
@@ -373,6 +373,7 @@ async function loadCatalog(){
  }
  for(const [key,match] of prices){if(merged.has(key))continue;const name=match.name;if(/(graffiti|spray|граффити|графити)/i.test(name))continue;const base=normalizeSkinName(name),image=imageMap.get(key)||imageMap.get(key.replace(/^sticker\s*\|\s*/i,''))||imageByBase.get(base)||imageByBase.get(normalizeSkinName(name.replace(/^sticker\s*\|\s*/i,'')))||'';merged.set(key,{id:'market-'+key.replace(/[^a-z0-9]+/g,'-'),name,price:match.price,color:'orange',image,rarity:'Предмет CS2',type:name.split(' | ')[0]||'Предмет',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:'market-csgo',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});}
  // Гарантируем наличие рубиновых Doppler-ножей в каталоге даже если источник каталога неполный.
+ // ВАЖНО: не подставляем картинку обычного Doppler/Black Pearl вместо Ruby — только точное совпадение Ruby.
  // Цены не выдумываем: если сервер прайса не прислал цену, показываем «цена недоступна».
  const rubyKnifeModels=['Bayonet','Bowie Knife','Butterfly Knife','Falchion Knife','Flip Knife','Gut Knife','Huntsman Knife','Karambit','Kukri Knife','M9 Bayonet','Navaja Knife','Shadow Daggers','Stiletto Knife','Talon Knife','Ursus Knife'];
  for(const [idx,model] of rubyKnifeModels.entries()){
@@ -382,7 +383,7 @@ async function loadCatalog(){
   const existing=[...merged.values()].find(x=>/doppler/i.test(x.name)&&/ruby/i.test(x.name)&&x.name.toLowerCase().includes(model.toLowerCase()));
   const imageCandidates=[...gameItems].filter(x=>x.image&&new RegExp(model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.name)&&/doppler/i.test(x.name)&&/ruby/i.test(x.name));
   const anyDoppler=[...gameItems].filter(x=>x.image&&new RegExp(model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.name)&&/doppler/i.test(x.name));
-  const image=existing?.image||imageCandidates[0]?.image||anyDoppler[0]?.image||'';
+  const image=imageCandidates[0]?.image||'';
   const finalName=existing?.name||name;
   const finalKey=finalName.toLowerCase();
   // Демо-каталог: условная цена позволяет предмету отображаться в маркете и апгрейдере.
