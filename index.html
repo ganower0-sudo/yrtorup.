@@ -307,7 +307,7 @@ function clearHistory(){history=[];renderHistory();renderRail()}
 async function loadCatalog(){
  const status=document.getElementById('priceStatus');
  if(status)status.textContent='Быстро загружаем каталог CS2 и актуальные цены с сервера…';
- const cacheKey='yrtorup-skins-images-cache-v3';
+ const cacheKey='yrtorup-skins-images-cache-v4';
  const imageByExact=new Map(),imageByBase=new Map();
  let gameItems=[];
  // Изображения/названия кэшируются отдельно от цен: цены всегда запрашиваются заново с сервера.
@@ -315,15 +315,32 @@ async function loadCatalog(){
  try{const c=JSON.parse(localStorage.getItem(cacheKey)||'null');if(c&&Array.isArray(c.items)&&c.items.length&&c.savedAt&&Date.now()-c.savedAt<30*24*60*60*1000)cached=c.items;}catch(e){}
  const catalogTask=(async()=>{
   if(cached){console.info('[YRTORUP] Каталог изображений из кэша:',cached.length);gameItems=cached;return;}
-  const urls=[
-   'https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins_not_grouped.json',
-   'https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json'
+  const catalogSources=[
+   {url:'https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins_not_grouped.json',kind:'skin'},
+   {url:'https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json',kind:'skin'},
+   {url:'https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/stickers.json',kind:'sticker'}
   ];
-  const attempts=urls.map(async url=>{
-   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
-   try{const r=await fetch(url,{cache:'force-cache',signal:controller.signal});if(!r.ok)throw new Error('HTTP '+r.status);const data=await r.json();if(!Array.isArray(data))throw new Error('Неверный формат каталога');const parsed=data.filter(x=>x&&x.name&&x.image).map(x=>({name:String(x.market_hash_name||x.name).trim(),image:x.image,rarity:x.rarity?.name||'Скин CS2',type:x.weapon?.name||x.category?.name||String(x.name).split(' | ')[0]}));if(!parsed.length)throw new Error('Пустой каталог');return parsed;}finally{clearTimeout(timer)}
+  const attempts=catalogSources.map(async source=>{
+   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+   try{
+    const r=await fetch(source.url,{cache:'force-cache',signal:controller.signal});if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();if(!Array.isArray(data))throw new Error('Неверный формат каталога');
+    const parsed=data.filter(x=>x&&x.name&&(x.image||x.images?.[0])).map(x=>({
+     name:String(x.market_hash_name||x.name).trim(),image:x.image||x.images?.[0]||'',
+     rarity:x.rarity?.name||(source.kind==='sticker'?'Наклейка CS2':'Скин CS2'),
+     type:source.kind==='sticker'?'Наклейка':(x.weapon?.name||x.category?.name||String(x.name).split(' | ')[0]),
+     itemKind:source.kind
+    }));
+    if(!parsed.length)throw new Error('Пустой каталог');return parsed;
+   }finally{clearTimeout(timer)}
   });
-  try{gameItems=await Promise.any(attempts);try{localStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),items:gameItems}));console.info('[YRTORUP] Кэш изображений обновлён:',gameItems.length)}catch(e){console.warn('[YRTORUP] Не удалось сохранить кэш изображений',e)}}catch(e){console.warn('[YRTORUP] Не удалось загрузить каталог картинок',e);gameItems=seed.filter(x=>x.image).map(x=>({name:x.name,image:x.image,rarity:x.rarity||'Скин CS2',type:x.type||x.name.split(' | ')[0]}));}
+  try{
+   const results=await Promise.allSettled(attempts),successful=results.filter(x=>x.status==='fulfilled').map(x=>x.value);
+   gameItems=successful.flat();
+   if(!gameItems.length)throw new Error('Не удалось загрузить ни один каталог');
+   const deduped=new Map();for(const item of gameItems){const k=(item.itemKind||'skin')+'|'+item.name.toLowerCase();if(!deduped.has(k))deduped.set(k,item);}gameItems=[...deduped.values()];
+   try{localStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),items:gameItems}));console.info('[YRTORUP] Кэш изображений обновлён:',gameItems.length,'(включая наклейки)')}catch(e){console.warn('[YRTORUP] Не удалось сохранить кэш изображений',e)}
+  }catch(e){console.warn('[YRTORUP] Не удалось загрузить каталог картинок',e);gameItems=seed.filter(x=>x.image).map(x=>({name:x.name,image:x.image,rarity:x.rarity||'Скин CS2',type:x.type||x.name.split(' | ')[0],itemKind:'skin'}));}
  })();
  const priceTask=(async()=>{
   const prices=new Map();let updatedAt=null;
@@ -352,7 +369,7 @@ async function loadCatalog(){
   const image=x.image||imageMap.get(key)||imageByBase.get(base)||'';
   const rarity=x.rarity||'Предмет CS2';
   const color=/Contraband|Covert|Тайное/i.test(rarity)?'red':/Classified|Засекреченное/i.test(rarity)?'purple':/Restricted|Запрещенное/i.test(rarity)?'pink':/Mil-Spec|Армейское/i.test(rarity)?'blue':'orange';
-  merged.set(key,{id:'game-'+key.replace(/[^a-z0-9]+/g,'-'),name,price:match?match.price:0,color,image,rarity,type:x.type||name.split(' | ')[0]||'Предмет',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:match?'market-csgo':'unavailable',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});
+  merged.set(key,{id:(x.itemKind==='sticker'?'sticker-':'game-')+key.replace(/[^a-z0-9]+/g,'-'),name,price:match?match.price:0,color,image,rarity,type:x.type||name.split(' | ')[0]||'Предмет',itemKind:x.itemKind||'skin',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:match?'market-csgo':'unavailable',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});
  }
  for(const [key,match] of prices){if(merged.has(key))continue;const name=match.name,base=normalizeSkinName(name),image=imageMap.get(key)||imageByBase.get(base)||'';merged.set(key,{id:'market-'+key.replace(/[^a-z0-9]+/g,'-'),name,price:match.price,color:'orange',image,rarity:'Предмет CS2',type:name.split(' | ')[0]||'Предмет',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:'market-csgo',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});}
  // Если сервер временно недоступен, показываем каталог, но не придумываем цены.
