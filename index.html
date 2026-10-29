@@ -296,7 +296,7 @@ function renderRail(){
 window.openRailDrop=function(index){
  const x=(window.__yrtorupRailItems||[])[Number(index)];if(!x)return;
  if(x.localSkin){const modal=document.getElementById('publicDropModal');if(!modal)return;const image=document.getElementById('publicDropImage');image.src=x.image||'';image.style.display=x.image?'block':'none';document.getElementById('publicDropName').textContent=x.name||'Скин';document.getElementById('publicDropSub').textContent=`Предмет каталога · Цена: ${x.price?money(x.price):'не указана'}`;document.getElementById('publicDropResult').textContent='ПРЕДМЕТ CS2';document.getElementById('publicDropResult').style.color='var(--yellow)';document.getElementById('publicDropAttempt').textContent='Демо-каталог YRTORUP';modal.classList.add('open');modal.style.display='flex';modal.setAttribute('aria-hidden','false');return;}
- const list=window.__yrtorupPublicFeedItems||[];const idx=list.indexOf(x);if(idx>=0&&typeof window.openPublicDrop==='function'){window.openPublicDrop(idx);return;}
+ const list=window.__yrtorupPublicFeedItems||[];const idx=list.indexOf(x);if(idx>=0&&typeof window.openPublicPlayer==='function'){window.openPublicPlayer(idx);return;}
  const modal=document.getElementById('publicDropModal');if(!modal)return;const win=!!x.win;const image=document.getElementById('publicDropImage');image.src=win?(x.toImage||''):(x.fromImage||'');image.style.display=image.src?'block':'none';document.getElementById('publicDropName').textContent=win?(x.to||x.targetName||'Выигранный предмет'):(x.from||'Исходный предмет');document.getElementById('publicDropSub').textContent=`Игрок: ${x.player||'Игрок'} · Цена: ${money(Number(win?x.toPrice:x.fromPrice)||0)}`;document.getElementById('publicDropResult').textContent=win?'УСПЕШНЫЙ АПГРЕЙД':'НЕУДАЧНЫЙ АПГРЕЙД';document.getElementById('publicDropResult').style.color=win?'var(--yellow)':'#f07878';document.getElementById('publicDropAttempt').textContent=`${x.from||'Скин'} → ${x.targetName||x.to||'Целевой скин'} · шанс ${Number(x.chance||0).toFixed(1)}%`;modal.classList.add('open');modal.style.display='flex';modal.setAttribute('aria-hidden','false');
 }
 function renderAll(){renderSource();renderTarget();renderTargetList();renderMarket();renderInventoryPage();renderHistory();renderRail();renderProfile();setBalance();saveState();saveCloudUserState();syncUserRecord()}
@@ -661,14 +661,40 @@ loadCatalog().catch(err => { console.error('Ошибка загрузки кат
 </script>
 
 
-<script id="yrtorup-rail-bottom-all-devices">
+<style id="yrtorup-rail-video-layout">
+/* Desktop: restore the recent-upgrades rail on the left, as in the reference video. */
+@media(min-width:851px){
+  body{padding-left:184px!important}
+  .rail{display:block!important;position:fixed!important;left:0!important;top:40px!important;bottom:0!important;width:184px!important;max-width:none!important;margin:0!important;padding:8px!important;overflow-y:auto!important;overflow-x:hidden!important;border:0!important;border-right:2px solid #292a2f!important;border-radius:0!important;z-index:9!important}
+  .rail-title{font-size:12px!important;padding:4px 2px 10px!important}
+  #railItems{display:flex!important;flex-direction:column!important;gap:6px!important}
+  .rail-card{display:block!important;width:100%!important;height:82px!important;min-height:82px!important;margin:0!important;padding:6px!important;cursor:pointer!important}
+  .rail-card img{width:100%!important;height:54px!important;right:0!important;top:0!important;object-fit:contain!important}
+  .rail-card b{left:6px!important;right:6px!important;bottom:18px!important;max-width:none!important;font-size:9px!important}
+  .rail-card small{left:6px!important;bottom:4px!important;font-size:8px!important}
+  .layout{max-width:1120px!important;margin:10px auto 0!important}
+}
+/* Mobile: keep the rail visible below the main page rather than squeezing the game UI. */
+@media(max-width:850px){
+  body{padding-left:0!important}
+  .rail{display:block!important;position:static!important;inset:auto!important;width:auto!important;max-width:none!important;margin:12px 10px 20px!important;padding:9px!important;border:1px solid #292a2f!important;border-radius:8px!important;overflow:visible!important}
+  .rail-title{font-size:10px!important;padding:4px 2px 10px!important}
+  #railItems{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important}
+  .rail-card{width:100%!important;height:82px!important;margin:0!important;min-width:0!important;padding:5px!important}
+  .rail-card img{width:100%!important;height:48px!important;right:0!important;top:0!important;object-fit:contain!important}
+  .rail-card b{left:5px!important;right:5px!important;bottom:17px!important;max-width:none!important;font-size:8px!important}
+  .rail-card small{left:5px!important;bottom:4px!important;font-size:7px!important}
+}
+</style>
+<script id="yrtorup-rail-video-placement">
 (function(){
-  const rail=document.querySelector('.rail');
-  const layout=document.querySelector('.layout');
-  if(!rail||!layout)return;
-  function placeRail(){ if(layout.nextElementSibling!==rail) layout.insertAdjacentElement('afterend',rail); }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',placeRail,{once:true});
-  placeRail(); window.addEventListener('resize',placeRail,{passive:true});
+ const rail=document.querySelector('.rail'), layout=document.querySelector('.layout');
+ if(!rail||!layout)return;
+ function placeRail(){
+   if(window.innerWidth<=850){ if(layout.nextElementSibling!==rail)layout.insertAdjacentElement('afterend',rail); }
+   else if(rail.nextElementSibling!==layout)layout.insertAdjacentElement('beforebegin',rail);
+ }
+ placeRail();window.addEventListener('resize',placeRail,{passive:true});
 })();
 </script>
 
