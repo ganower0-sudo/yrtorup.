@@ -307,7 +307,7 @@ function clearHistory(){history=[];renderHistory();renderRail()}
 async function loadCatalog(){
  const status=document.getElementById('priceStatus');
  if(status)status.textContent='Быстро загружаем каталог CS2 и актуальные цены с сервера…';
- const cacheKey='yrtorup-skins-images-cache-v6-stickers-no-graffiti';
+ const cacheKey='yrtorup-skins-images-cache-v7-stickers-ruby-no-graffiti';
  const imageByExact=new Map(),imageByBase=new Map();
  let gameItems=[];
  // Изображения/названия кэшируются отдельно от цен: цены всегда запрашиваются заново с сервера.
@@ -375,13 +375,21 @@ async function loadCatalog(){
  // Гарантируем наличие рубиновых Doppler-ножей в каталоге даже если источник каталога неполный.
  // Цены не выдумываем: если сервер прайса не прислал цену, показываем «цена недоступна».
  const rubyKnifeModels=['Bayonet','Bowie Knife','Butterfly Knife','Falchion Knife','Flip Knife','Gut Knife','Huntsman Knife','Karambit','Kukri Knife','M9 Bayonet','Navaja Knife','Shadow Daggers','Stiletto Knife','Talon Knife','Ursus Knife'];
- for(const model of rubyKnifeModels){
+ for(const [idx,model] of rubyKnifeModels.entries()){
   const name=`★ ${model} | Doppler (Ruby)`,key=name.toLowerCase();
-  if(merged.has(key))continue;
-  const priceMatch=prices.get(key);
-  const imageCandidates=[...gameItems].filter(x=>x.image&&new RegExp(model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.name)&&/doppler/i.test(x.name));
-  const image=imageCandidates[0]?.image||'';
-  merged.set(key,{id:'ruby-'+key.replace(/[^a-z0-9]+/g,'-'),name,price:priceMatch?.price||0,color:'red',image,rarity:'Тайное',type:model,itemKind:'skin',wear:'Ruby',priceSource:priceMatch?'market-csgo':'unavailable',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});
+  const variants=[name,`★ ${model} | Doppler Ruby`,`★ ${model} | Doppler (Ruby) (Factory New)`].map(v=>v.toLowerCase());
+  const priceMatch=variants.map(k=>prices.get(k)).find(Boolean);
+  const existing=[...merged.values()].find(x=>/doppler/i.test(x.name)&&/ruby/i.test(x.name)&&x.name.toLowerCase().includes(model.toLowerCase()));
+  const imageCandidates=[...gameItems].filter(x=>x.image&&new RegExp(model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.name)&&/doppler/i.test(x.name)&&/ruby/i.test(x.name));
+  const anyDoppler=[...gameItems].filter(x=>x.image&&new RegExp(model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.name)&&/doppler/i.test(x.name));
+  const image=existing?.image||imageCandidates[0]?.image||anyDoppler[0]?.image||'';
+  const finalName=existing?.name||name;
+  const finalKey=finalName.toLowerCase();
+  // Демо-каталог: условная цена позволяет предмету отображаться в маркете и апгрейдере.
+  // Она явно помечена как демонстрационная, если реальной цены нет в прайсе сервера.
+  const demoPrice=[245000,225000,185000,115000,95000,90000,88000,280000,75000,210000,65000,82000,105000,175000,98000][idx];
+  const realPrice=priceMatch?.price||(existing?.priceSource==='market-csgo'?existing.price:0);
+  merged.set(finalKey,{...(existing||{}),id:existing?.id||'ruby-'+finalKey.replace(/[^a-z0-9]+/g,'-'),name:finalName,price:realPrice||demoPrice,color:'red',image,rarity:'Тайное',type:model,itemKind:'skin',wear:'Ruby',priceSource:realPrice?'market-csgo':'fixed-demo',marketHashName:finalName,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});
  }
  // Если сервер временно недоступен, показываем каталог, но не придумываем цены.
  catalog=[...merged.values()].sort((a,b)=>a.name.localeCompare(b.name,'en'));
