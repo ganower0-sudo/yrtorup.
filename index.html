@@ -264,7 +264,7 @@ function inventoryTotal(){return inventory.reduce((sum,x)=>sum+Math.max(0,Number
 function accountStorageKey(){return 'yrtorup-state-v2:'+((yrtorupGoogleUser&&yrtorupGoogleUser.uid)||'guest');}
 function saveState(){try{localStorage.setItem(accountStorageKey(),JSON.stringify({inventory,selectedId,targetId,balance,history,profile}))}catch(e){notify('Не удалось сохранить всё состояние. Возможно, аватар слишком большой.')}}
 function loadState(){try{const raw=localStorage.getItem(accountStorageKey())||(!yrtorupGoogleUser?localStorage.getItem('yrtorup-state-v2'):null);const x=raw?JSON.parse(raw):null;if(!x){inventory=[];selectedId=null;targetId=seed[6].id;balance=500000;history=[];profile={nick:yrtorupGoogleUser?.displayName||'Игрок YRTORUP',avatar:yrtorupGoogleUser?.photoURL||'',withdrawals:[]};return;}inventory=Array.isArray(x.inventory)?x.inventory:[];selectedId=x.selectedId||null;targetId=x.targetId||seed[6].id;balance=Number.isFinite(Number(x.balance))?Number(x.balance):500000;history=Array.isArray(x.history)?x.history:[];profile={nick:x.profile?.nick||yrtorupGoogleUser?.displayName||'Игрок YRTORUP',avatar:x.profile?.avatar||yrtorupGoogleUser?.photoURL||'',withdrawals:Array.isArray(x.profile?.withdrawals)?x.profile.withdrawals:[]}}catch(e){inventory=[];selectedId=null;targetId=seed[6].id;balance=500000;history=[];profile={nick:yrtorupGoogleUser?.displayName||'Игрок YRTORUP',avatar:yrtorupGoogleUser?.photoURL||'',withdrawals:[]}}}
-function art(s,cls=''){const ruby=/ruby/i.test(String(s.name||'')+' '+String(s.wear||''));const rubyFilter=ruby?'filter:hue-rotate(285deg) saturate(2.4) brightness(1.08);':'';return `<div class="art ${cls}"><img loading="lazy" style="${rubyFilter}" src="${s.image||''}" alt="${s.name}" onerror="this.style.opacity=0"></div>`}
+function art(s,cls=''){const ruby=/ruby/i.test(String(s.name||'')+' '+String(s.wear||''));const rubyFilter=ruby?'filter:sepia(1) saturate(8) hue-rotate(315deg) brightness(.82) contrast(1.18);':'';return `<div class="art ${cls}"><img loading="lazy" style="${rubyFilter}" src="${s.image||''}" alt="${s.name}" onerror="this.style.opacity=0"></div>`}
 function getSelected(){return inventory.find(x=>x.id===selectedId)||null}function getTarget(){return catalog.find(x=>x.id===targetId)||catalog[0]}
 let adminChanceBonus=0;
 function applyAdminChanceBonus(){adminChanceBonus=Math.max(0,Math.min(80,Number(document.getElementById('adminChanceBonus').value)||0));try{localStorage.setItem('yrtorup-admin-chance-bonus',String(adminChanceBonus))}catch(e){};renderAll();adminMsg('Бонус сохранён. Фактический шанс обновлён на колесе и показан в панели.')}
@@ -320,7 +320,7 @@ async function loadCatalog(){
  const status=document.getElementById('priceStatus');
  applyAdminPriceOverrides();renderAdminPrices();
  if(status)status.textContent='Быстро загружаем каталог CS2 и актуальные цены с сервера…';
- const cacheKey='yrtorup-skins-images-cache-v10-ruby-image-fallback-no-graffiti';
+ const cacheKey='yrtorup-skins-images-cache-v11-ruby-red-tint-no-graffiti';
  const imageByExact=new Map(),imageByBase=new Map();
  let gameItems=[];
  // Изображения/названия кэшируются отдельно от цен: цены всегда запрашиваются заново с сервера.
