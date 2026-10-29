@@ -307,7 +307,7 @@ function clearHistory(){history=[];renderHistory();renderRail()}
 async function loadCatalog(){
  const status=document.getElementById('priceStatus');
  if(status)status.textContent='Быстро загружаем каталог CS2 и актуальные цены с сервера…';
- const cacheKey='yrtorup-skins-images-cache-v4';
+ const cacheKey='yrtorup-skins-images-cache-v5-no-graffiti';
  const imageByExact=new Map(),imageByBase=new Map();
  let gameItems=[];
  // Изображения/названия кэшируются отдельно от цен: цены всегда запрашиваются заново с сервера.
@@ -325,7 +325,7 @@ async function loadCatalog(){
    try{
     const r=await fetch(source.url,{cache:'force-cache',signal:controller.signal});if(!r.ok)throw new Error('HTTP '+r.status);
     const data=await r.json();if(!Array.isArray(data))throw new Error('Неверный формат каталога');
-    const parsed=data.filter(x=>x&&x.name&&(x.image||x.images?.[0])).map(x=>({
+    const parsed=data.filter(x=>x&&x.name&&!/(graffiti|spray|граффити|графити)/i.test(String(x.name))&&(x.image||x.images?.[0])).map(x=>({
      name:String(x.market_hash_name||x.name).trim(),image:x.image||x.images?.[0]||'',
      rarity:x.rarity?.name||(source.kind==='sticker'?'Наклейка CS2':'Скин CS2'),
      type:source.kind==='sticker'?'Наклейка':(x.weapon?.name||x.category?.name||String(x.name).split(' | ')[0]),
@@ -350,7 +350,7 @@ async function loadCatalog(){
     const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
     const data=await r.json();if(data?.success===false||!data?.items)throw new Error('Сервер вернул неподдерживаемый формат прайса');
     updatedAt=Number(data.time)||null;window.__marketPriceFormat=Array.isArray(data.format)?Object.fromEntries(data.format.map((k,i)=>[k,i])):{};
-    const add=(item,fallbackName='')=>{if(!item)return;let name='',raw;if(Array.isArray(item)){const fmt=window.__marketPriceFormat||{};name=item[fmt.market_hash_name]||'';raw=item[fmt.price];if(!name&&item.length>=3){name=item[2];raw=item[0]}}else if(typeof item==='object'){name=item.market_hash_name||item.name||item.hash_name||fallbackName||'';raw=item.price}else if(fallbackName){name=fallbackName;raw=item}name=String(name||'').trim();const price=Number(String(raw??'').replace(/\s/g,'').replace(',','.'));if(!name||!Number.isFinite(price)||price<=0)return;const key=name.toLowerCase(),prev=prices.get(key);if(!prev||price<prev.price)prices.set(key,{price,name});};
+    const add=(item,fallbackName='')=>{if(!item)return;let name='',raw;if(Array.isArray(item)){const fmt=window.__marketPriceFormat||{};name=item[fmt.market_hash_name]||'';raw=item[fmt.price];if(!name&&item.length>=3){name=item[2];raw=item[0]}}else if(typeof item==='object'){name=item.market_hash_name||item.name||item.hash_name||fallbackName||'';raw=item.price}else if(fallbackName){name=fallbackName;raw=item}name=String(name||'').trim();if(/(graffiti|spray|граффити|графити)/i.test(name))return;const price=Number(String(raw??'').replace(/\s/g,'').replace(',','.'));if(!name||!Number.isFinite(price)||price<=0)return;const key=name.toLowerCase(),prev=prices.get(key);if(!prev||price<prev.price)prices.set(key,{price,name});};
     const items=data.items;
     if(Array.isArray(items)){if(items.length&&Array.isArray(items[0]))items.forEach(x=>add(x));else if(items.length&&typeof items[0]==='object')items.forEach(x=>add(x));else if(items.length&&data.format?.length){const w=data.format.length;for(let i=0;i+w<=items.length;i+=w)add(items.slice(i,i+w));}}
     else if(typeof items==='object')for(const [k,v] of Object.entries(items))add(v,k);
@@ -365,13 +365,13 @@ async function loadCatalog(){
  const imageMap=new Map();for(const x of gameItems){if(!x||!x.name)continue;const key=String(x.name).toLowerCase();if(x.image)imageMap.set(key,x.image);const base=normalizeSkinName(x.name);if(x.image&&!imageByBase.has(base))imageByBase.set(base,x.image);}
  const merged=new Map();
  for(const x of gameItems){
-  const name=String(x.market_hash_name||x.name).trim(),key=name.toLowerCase(),match=prices.get(key),base=normalizeSkinName(name);
+  const name=String(x.market_hash_name||x.name).trim();if(/(graffiti|spray|граффити|графити)/i.test(name))continue;const key=name.toLowerCase(),match=prices.get(key),base=normalizeSkinName(name);
   const image=x.image||imageMap.get(key)||imageByBase.get(base)||'';
   const rarity=x.rarity||'Предмет CS2';
   const color=/Contraband|Covert|Тайное/i.test(rarity)?'red':/Classified|Засекреченное/i.test(rarity)?'purple':/Restricted|Запрещенное/i.test(rarity)?'pink':/Mil-Spec|Армейское/i.test(rarity)?'blue':'orange';
   merged.set(key,{id:(x.itemKind==='sticker'?'sticker-':'game-')+key.replace(/[^a-z0-9]+/g,'-'),name,price:match?match.price:0,color,image,rarity,type:x.type||name.split(' | ')[0]||'Предмет',itemKind:x.itemKind||'skin',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:match?'market-csgo':'unavailable',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});
  }
- for(const [key,match] of prices){if(merged.has(key))continue;const name=match.name,base=normalizeSkinName(name),image=imageMap.get(key)||imageByBase.get(base)||'';merged.set(key,{id:'market-'+key.replace(/[^a-z0-9]+/g,'-'),name,price:match.price,color:'orange',image,rarity:'Предмет CS2',type:name.split(' | ')[0]||'Предмет',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:'market-csgo',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});}
+ for(const [key,match] of prices){if(merged.has(key))continue;const name=match.name;if(/(graffiti|spray|граффити|графити)/i.test(name))continue;const base=normalizeSkinName(name),image=imageMap.get(key)||imageByBase.get(base)||'';merged.set(key,{id:'market-'+key.replace(/[^a-z0-9]+/g,'-'),name,price:match.price,color:'orange',image,rarity:'Предмет CS2',type:name.split(' | ')[0]||'Предмет',wear:(name.match(/\(([^)]+)\)\s*$/)||[])[1]||'',priceSource:'market-csgo',marketHashName:name,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});}
  // Если сервер временно недоступен, показываем каталог, но не придумываем цены.
  catalog=[...merged.values()].sort((a,b)=>a.name.localeCompare(b.name,'en'));
  if(!catalog.length)catalog=seed.map(x=>({...x,price:0,priceSource:'unavailable'}));
