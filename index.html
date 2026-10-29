@@ -307,7 +307,7 @@ function clearHistory(){history=[];renderHistory();renderRail()}
 async function loadCatalog(){
  const status=document.getElementById('priceStatus');
  if(status)status.textContent='Быстро загружаем каталог CS2 и актуальные цены с сервера…';
- const cacheKey='yrtorup-skins-images-cache-v8-exact-ruby-images-no-graffiti';
+ const cacheKey='yrtorup-skins-images-cache-v9-ruby-phase-images-no-graffiti';
  const imageByExact=new Map(),imageByBase=new Map();
  let gameItems=[];
  // Изображения/названия кэшируются отдельно от цен: цены всегда запрашиваются заново с сервера.
@@ -328,6 +328,7 @@ async function loadCatalog(){
     const parsed=data.filter(x=>x&&x.name&&!/(graffiti|spray|граффити|графити)/i.test(String(x.name))&&(x.image||x.images?.[0])).map(x=>({
      name:(source.kind==='sticker'&&!/^sticker\s*\|/i.test(String(x.market_hash_name||x.name))?'Sticker | ':'')+String(x.market_hash_name||x.name).trim(),image:x.image||x.images?.[0]||'',
      rarity:x.rarity?.name||(source.kind==='sticker'?'Наклейка CS2':'Скин CS2'),
+     phase:x.phase||x.pattern?.name||'',
      type:source.kind==='sticker'?'Наклейка':(x.weapon?.name||x.category?.name||String(x.name).split(' | ')[0]),
      itemKind:source.kind
     }));
@@ -381,7 +382,7 @@ async function loadCatalog(){
   const variants=[name,`★ ${model} | Doppler Ruby`,`★ ${model} | Doppler (Ruby) (Factory New)`].map(v=>v.toLowerCase());
   const priceMatch=variants.map(k=>prices.get(k)).find(Boolean);
   const existing=[...merged.values()].find(x=>/doppler/i.test(x.name)&&/ruby/i.test(x.name)&&x.name.toLowerCase().includes(model.toLowerCase()));
-  const imageCandidates=[...gameItems].filter(x=>x.image&&new RegExp(model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.name)&&/doppler/i.test(x.name)&&/ruby/i.test(x.name));
+  const imageCandidates=[...gameItems].filter(x=>x.image&&new RegExp(model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.name)&&/doppler/i.test(x.name)&&(/ruby/i.test(x.name)||/ruby/i.test(String(x.phase||''))));
   const anyDoppler=[...gameItems].filter(x=>x.image&&new RegExp(model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.name)&&/doppler/i.test(x.name));
   const image=imageCandidates[0]?.image||'';
   const finalName=existing?.name||name;
