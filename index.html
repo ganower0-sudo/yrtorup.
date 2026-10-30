@@ -397,7 +397,7 @@ const rubyKnifeModels=['Bayonet','Bowie Knife','Butterfly Knife','Falchion Knife
   const existing=[...merged.values()].find(x=>/doppler/i.test(x.name)&&/ruby/i.test(x.name)&&x.name.toLowerCase().includes(model.toLowerCase()));
   const imageCandidates=[...gameItems].filter(x=>x.image&&new RegExp(model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.name)&&/doppler/i.test(x.name)&&(/ruby/i.test(x.name)||/ruby/i.test(String(x.phase||''))));
   const anyDoppler=[...gameItems].filter(x=>x.image&&new RegExp(model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(x.name)&&/doppler/i.test(x.name));
-  const image=imageCandidates[0]?.image||anyDoppler[0]?.image||'';
+  const image=imageCandidates[0]?.image||'';
   const finalName=existing?.name||name;
   const finalKey=finalName.toLowerCase();
   // Демо-каталог: условная цена позволяет предмету отображаться в маркете и апгрейдере.
@@ -406,7 +406,18 @@ const rubyKnifeModels=['Bayonet','Bowie Knife','Butterfly Knife','Falchion Knife
   const realPrice=priceMatch?.price||(existing?.priceSource==='market-csgo'?existing.price:0);
   merged.set(finalKey,{...(existing||{}),id:existing?.id||'ruby-'+finalKey.replace(/[^a-z0-9]+/g,'-'),name:finalName,price:realPrice||demoPrice,color:'red',image,rarity:'Тайное',type:model,itemKind:'skin',wear:'Ruby',priceSource:realPrice?'market-csgo':'fixed-demo',marketHashName:finalName,priceUpdatedAt:updatedAt?new Date(updatedAt*1000).toISOString():null});
  }
- // Если сервер временно недоступен, показываем каталог, но не придумываем цены.
+ // Добавляем все записи из API, у которых фаза действительно Ruby.
+ // Изображение берём только из самой Ruby-записи; обычный Doppler не подставляем.
+ const exactRubyEntries=gameItems.filter(x=>x&&x.image&&/ruby/i.test(String(x.phase||''))&&/doppler/i.test(String(x.name||''))&&/knife|bayonet|karambit|daggers|stiletto|talon|ursus|kukri|navaja|falchion|bowie|huntsman|butterfly|flip|gut/i.test(String(x.type||x.name||'')));
+ for(const item of exactRubyEntries){
+  const itemName=String(item.name||'').trim();
+  if(!itemName)continue;
+  const displayName=itemName.startsWith('★ ')?itemName:'★ '+itemName;
+  const normalized=displayName.toLowerCase();
+  const old=merged.get(normalized);
+  merged.set(normalized,{...(old||{}),id:old?.id||'ruby-api-'+normalized.replace(/[^a-z0-9]+/g,'-'),name:displayName,image:item.image,phase:'Ruby',wear:'Ruby',color:'red',rarity:item.rarity||'Тайное',type:item.type||displayName.split(' | ')[0],itemKind:'skin',price:old?.price||0,priceSource:old?.priceSource||'unavailable'});
+ }
+ // Если сервер временно недоступен, показываем каталог, но не подменяем Ruby-картинки обычным Doppler.
  catalog=[...merged.values()].sort((a,b)=>a.name.localeCompare(b.name,'en'));
  const sharedFetch=await fetchSharedPrices();if(sharedFetch.ok)console.info('[YRTORUP] Общие цены загружены:',sharedFetch.count);
  applyAdminPriceOverrides();
