@@ -797,14 +797,18 @@ loadCatalog().catch(err => { console.error('Ошибка загрузки кат
 </body></html>
 
 <style>
-#upgrade .source-multi-feature{display:flex!important;flex-direction:column!important;gap:10px!important;align-items:stretch!important;justify-content:flex-start!important;padding:10px!important;min-height:285px!important}
-#upgrade .source-selected-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;max-height:230px;overflow:auto}
-#upgrade .source-selected-item{min-width:0;background:#191a1e;border:1px solid #3a3830;border-radius:5px;padding:5px;display:flex;flex-direction:column;gap:4px}
-#upgrade .source-selected-item .art{height:58px;width:100%;background:radial-gradient(ellipse,#49332166,transparent 72%)}
-#upgrade .source-selected-item b{font-size:8px;line-height:1.25;overflow-wrap:anywhere}
-#upgrade .source-selected-item strong{font-size:9px;color:var(--yellow)}
-#upgrade .source-total{display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px solid #393a40;padding-top:8px;font-size:9px;color:#aaa}
-#upgrade .source-total b{color:var(--yellow);font-size:13px}
+/* Multi-skin source tray styled like the supplied reference: 3 columns, six tiles, total below. */
+#upgrade .source-multi-feature{display:flex!important;flex-direction:column!important;gap:9px!important;align-items:stretch!important;justify-content:flex-start!important;padding:9px!important;min-height:0!important;height:auto!important;background:#17181c!important;border:1px solid #272a31!important;border-radius:12px!important;}
+#upgrade .source-selected-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;max-height:250px!important;overflow:auto!important;}
+#upgrade .source-selected-item{position:relative!important;min-width:0!important;height:114px!important;box-sizing:border-box!important;overflow:hidden!important;background:linear-gradient(160deg,#20242b,#14161a)!important;border:1px solid #45617f!important;border-radius:8px!important;padding:5px!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;gap:2px!important;}
+#upgrade .source-selected-item .art{position:absolute!important;inset:7px 5px 23px!important;width:auto!important;height:auto!important;min-height:0!important;background:radial-gradient(ellipse at center,#34465c 0%,#202833 48%,transparent 78%)!important;border:0!important;}
+#upgrade .source-selected-item .art img{width:100%!important;height:100%!important;object-fit:contain!important;padding:2px!important;filter:drop-shadow(0 4px 7px #000b)!important;}
+#upgrade .source-selected-item b{position:relative!important;z-index:1!important;display:block!important;font-size:8px!important;line-height:1.15!important;text-align:center!important;white-space:normal!important;overflow:hidden!important;text-overflow:ellipsis!important;max-height:19px!important;padding:2px 1px 0!important;background:linear-gradient(transparent,#15171c 35%)!important;}
+#upgrade .source-selected-item strong{position:absolute!important;z-index:2!important;top:5px!important;right:5px!important;font-size:8px!important;line-height:1!important;color:#ffe000!important;background:#15171dcc!important;border-radius:10px!important;padding:3px 4px!important;white-space:nowrap!important;}
+#upgrade .source-total{display:flex!important;justify-content:center!important;gap:7px!important;align-items:center!important;border:0!important;padding:0 0 1px!important;font-size:10px!important;color:#aeb3bd!important;text-align:center!important;}
+#upgrade .source-total span{display:none!important}
+#upgrade .source-total b{color:#ffe000!important;font-size:18px!important;font-weight:900!important;text-shadow:0 0 10px #ffe00030!important;}
+#upgrade .source-total b:after{content:' ◈';font-size:13px}
 #upgrade .skin-tile.selected{border-color:var(--yellow)!important;background:#29260d!important;box-shadow:inset 0 0 0 1px #a88e00}
-@media(max-width:760px){#upgrade .source-selected-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){#upgrade .source-selected-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}#upgrade .source-selected-item{height:104px!important}#upgrade .source-selected-item .art{inset:7px 4px 22px!important}#upgrade .source-selected-item b{font-size:7px!important}#upgrade .source-selected-item strong{font-size:7px!important}}
 </style>
