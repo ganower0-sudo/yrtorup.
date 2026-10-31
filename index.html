@@ -218,6 +218,60 @@ input:focus,select:focus{outline:1px solid #ffe000;border-color:#ffe000}
 </style>
 
 <style id="yrtorup-new-features">.quick-multipliers{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:9px}.quick-multipliers span{font-size:9px;color:#9a9ca4}.quick-multipliers button{background:#24252a;border:1px solid #45464d;color:#ffe000;border-radius:4px;padding:6px 11px;font-weight:900;cursor:pointer}.quick-multipliers button:hover{background:#39320b;border-color:#ffe000}.daily-bonus-panel{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;border-color:#61520a;background:linear-gradient(110deg,#26220e,#17181c)}.daily-bonus-panel p,.mission-card p{color:#9699a2;font-size:11px;margin:7px 0 0}.daily-bonus-action{display:flex;flex-direction:column;align-items:flex-end;gap:7px}.daily-bonus-action strong{font-size:22px;color:var(--yellow)}.daily-bonus-action small{color:#9b9da5;font-size:9px}.daily-bonus-action button:disabled,.mission-card button:disabled{opacity:.45;cursor:not-allowed}.missions-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.mission-card{min-width:0}.mission-card-head{display:flex;justify-content:space-between;gap:8px}.mission-card-head h3{font-size:14px;margin:4px 0}.mission-card-head>strong{color:var(--yellow);white-space:nowrap}.mission-progress{height:7px;background:#303137;border-radius:20px;overflow:hidden;margin:15px 0 10px}.mission-progress span{display:block;height:100%;background:linear-gradient(90deg,#9d8500,#ffe000);border-radius:20px}.mission-card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px}.mission-card-foot small{color:#aaa}.mission-card-foot button{width:auto;padding:8px 12px;font-size:9px}.mission-recent{display:flex;justify-content:space-between;gap:10px;padding:10px;border-bottom:1px solid #303136;font-size:10px}.mission-recent:last-child{border:0}@media(max-width:760px){.missions-grid{grid-template-columns:1fr}.daily-bonus-action{align-items:flex-start;width:100%}.quick-multipliers button{flex:1}}</style>
+
+<style id="yrtorup-profile-premium">
+/* Premium profile refresh: visual-only overrides; existing profile controls and handlers remain intact. */
+#profilePage{max-width:1120px;margin:0 auto}
+#profilePage>.page-title{margin:8px 0 24px;position:relative}
+#profilePage>.page-title:after{content:"";position:absolute;right:24px;top:-10px;width:170px;height:120px;pointer-events:none;background:radial-gradient(ellipse,rgba(255,220,0,.16),transparent 68%);filter:blur(8px)}
+#profilePage>.panel{
+ max-width:none!important;min-height:0!important;padding:24px!important;position:relative;overflow:hidden;
+ border:1px solid #383940!important;border-radius:18px!important;
+ background:linear-gradient(145deg,rgba(255,220,0,.055),transparent 24%),linear-gradient(160deg,#1b1c20,#131417 72%)!important;
+ box-shadow:0 18px 55px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.035)
+}
+#profilePage>.panel>div:first-child:not(.under-grid){
+ display:grid!important;grid-template-columns:116px minmax(0,1fr)!important;gap:22px!important;align-items:center!important;
+ padding:22px!important;margin:0 0 18px!important;border:1px solid #35363d;border-radius:15px;
+ background:linear-gradient(110deg,rgba(255,220,0,.09),rgba(255,255,255,.018) 45%),#17181c
+}
+#avatarPreview{width:112px!important;height:112px!important;border:3px solid #ffe000!important;padding:3px;background:#25262a!important;box-shadow:0 0 0 7px rgba(255,224,0,.07),0 10px 30px #0008}
+#profilePage label{font-size:11px!important;font-weight:900;letter-spacing:.09em;color:#ffe36a!important}
+#profileNick{height:48px!important;border-radius:9px!important;border:1px solid #3b3c43!important;background:#101114!important;padding:0 14px!important;font-size:15px!important;outline:none}
+#profileNick:focus,#promoCodeInput:focus{border-color:#ffe000!important;box-shadow:0 0 0 3px rgba(255,224,0,.10)}
+#avatarFile{display:inline-block;max-width:100%;padding:10px;border:1px dashed #55565c;border-radius:9px;background:#111216}
+#profilePage .primary{border-radius:9px!important;min-height:44px;box-shadow:0 7px 20px rgba(255,220,0,.12);transition:transform .18s,filter .18s}
+#profilePage .primary:hover{transform:translateY(-2px);filter:brightness(1.08)}
+#profilePage .under{border:1px solid #34353c!important;border-radius:13px!important;background:linear-gradient(145deg,#1b1c20,#151619)!important;padding:18px!important;min-height:0!important}
+#profilePage .under>b{font-size:11px!important;letter-spacing:.07em;color:#ffe36a!important}
+#profilePage .under>span{display:block;margin-top:9px!important;color:#d4d5da!important;font-size:13px!important;line-height:1.5}
+#profilePage .under:has(#promoCodeInput),#profilePage .under:has(#googleAccountStatus){margin-top:14px!important}
+#profilePage .under-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;margin-top:14px!important}
+#profilePage h2{font-size:19px!important;letter-spacing:.015em;margin:26px 0 13px!important}
+#profileTopSkin{max-width:none!important;min-height:150px!important;border:1px solid #3a3b41!important;border-radius:14px!important;background:radial-gradient(ellipse at 22% 50%,rgba(255,215,0,.12),transparent 55%),#18191d!important;padding:20px!important}
+#profileSkins{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(175px,1fr))!important;gap:12px!important;margin-top:14px}
+#profileSkins .market-card{min-width:0!important;border:1px solid #35363d!important;border-radius:13px!important;background:linear-gradient(160deg,#202126,#151619)!important;padding:10px!important;transition:transform .18s,border-color .18s,box-shadow .18s}
+#profileSkins .market-card:hover{transform:translateY(-3px);border-color:#bda900!important;box-shadow:0 12px 28px #0006}
+#profileSkins .art{height:116px!important;background:radial-gradient(ellipse,rgba(255,220,0,.10),transparent 68%)!important}
+#profileSkins .art img{object-fit:contain!important}
+#profileSkins .market-card button{border-radius:8px!important}
+#withdrawHistory{border:1px dashed #42434a!important;border-radius:13px!important;padding:16px!important;background:#141519!important}
+#withdrawHistory>div{border:1px solid #34353a!important;border-radius:12px!important;background:linear-gradient(110deg,rgba(255,220,0,.045),transparent 50%),#191a1e!important;margin:8px 0!important;padding:12px!important}
+#withdrawHistory img{object-fit:contain!important;filter:drop-shadow(0 5px 10px #0008)}
+#profilePage .empty{color:#9b9da5}
+@media(max-width:700px){
+ #profilePage>.panel{padding:13px!important;border-radius:13px!important}
+ #profilePage>.panel>div:first-child:not(.under-grid){grid-template-columns:1fr!important;text-align:center;padding:17px!important}
+ #avatarPreview{margin:0 auto}
+ #profilePage .under-grid{grid-template-columns:1fr!important}
+ #profilePage .under{padding:14px!important}
+ #profileSkins{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px}
+ #profileSkins .market-card{padding:7px!important}
+ #profileSkins .art{height:90px!important}
+ #profilePage h2{font-size:16px!important}
+}
+</style>
+
 </head><body>
 <header class="top"><button class="brand" onclick="showPage('upgrade')"><span class="logo">Y</span> YRTORUP</button><nav class="nav"><button class="active" data-page="upgrade" onclick="showPage('upgrade')">Апгрейд</button><button data-page="inventory" onclick="showPage('inventory')">Инвентарь</button><button data-page="profilePage" onclick="showPage('profilePage')">Профиль</button><button data-page="market" onclick="showPage('market')">Маркет</button><button data-page="history" onclick="showPage('history')">История</button><button data-page="statsPage" onclick="showPage('statsPage')">Статистика</button><button data-page="missionsPage" onclick="showPage('missionsPage')">Задания</button></nav><div class="balance"><small>БАЛАНС · ИНВЕНТАРЬ</small><b id="balance">500 000 ₽</b><small id="inventoryValue" style="color:var(--green)">СКИНЫ: 0 ₽</small></div><button class="profile" id="googleAuthButton" onclick="handleGoogleButton()" title="Войти через Google"><img id="topAvatar" src="https://placehold.co/64x64/25262a/ffe000?text=Y" alt="Аватар"><span class="auth-label" id="topAuthLabel">Войти через Google</span></button><button class="admin-open" onclick="toggleAdmin()">⚙ АДМИН</button></header>
 <aside class="rail"><div class="rail-title">● ПОСЛЕДНИЕ АПГРЕЙДЫ</div><div id="railItems"></div></aside>
