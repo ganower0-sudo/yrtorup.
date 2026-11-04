@@ -423,7 +423,7 @@ function effectiveChance(){return Math.min(80,baseChance()+Math.max(0,Math.min(8
 function updateAdminChancePreview(){const el=document.getElementById('adminChancePreview');if(!el)return;const a=getSelectedItems(),b=getTarget();if(!a.length||!b||b.price<=0){el.textContent='Выбери до 6 исходных скинов и целевой предмет';return}const base=baseChance();el.textContent=base.toFixed(1)+'% на колесе; '+adminChanceBonus.toFixed(1)+' п.п. локального бонуса = '+effectiveChance().toFixed(1)+'% фактический шанс теста';}
 let selectedChancePreset=null;
 function setChancePreset(p){selectedChancePreset=p;document.querySelectorAll('.chance-presets button').forEach(b=>b.classList.toggle('active',Number(b.textContent.replace('%',''))===p));const s=getSelectedTotal();if(s){const expected=s/(p/100);document.getElementById('targetMinPrice').value=Math.max(0,Math.floor(expected*.9));document.getElementById('targetMaxPrice').value=Math.ceil(expected*1.1);const candidates=catalog.filter(x=>x.price>=expected*.9&&x.price<=expected*1.1).sort((a,b)=>Math.abs(a.price-expected)-Math.abs(b.price-expected));if(candidates.length)targetId=candidates[0].id;}renderAll();}
-function setBalance(){const b=document.getElementById('balance');if(b)b.textContent=money(balance);const mb=document.getElementById('marketBalance');if(mb)mb.textContent=money(balance);const cb=document.getElementById('casesBalance');if(cb)cb.textContent=money(balance);const iv=document.getElementById('inventoryValue');if(iv)iv.textContent='СКИНЫ: '+money(inventoryTotal())}
+function setBalance(){document.getElementById('balance').textContent=money(balance);document.getElementById('marketBalance').textContent=money(balance);const cb=document.getElementById('casesBalance');if(cb)cb.textContent=money(balance);const iv=document.getElementById('inventoryValue');if(iv)iv.textContent='СКИНЫ: '+money(inventoryTotal())}
 function renderSource(){const chosen=getSelectedItems(),total=getSelectedTotal();document.getElementById('invCount').textContent=inventory.length+' ДОСТУПНО';document.getElementById('pickerCount').textContent=chosen.length+' / 6 ВЫБРАНО';const feature=document.getElementById('sourceFeature');feature.className=chosen.length?`featured source-multi-feature count-${chosen.length}`:'empty';feature.innerHTML=chosen.length?`<div class="source-selected-grid">${chosen.map(x=>`<div class="source-selected-item">${art(x)}<b>${x.name}</b><strong>${money(x.price)}</strong></div>`).join('')}</div><div class="source-total"><span>${chosen.length} СКИНОВ В АПГРЕЙДЕ</span><b>${money(total)}</b></div>`:'Выбери до 6 скинов в списке ниже.';document.getElementById('picker').innerHTML=inventory.map(x=>{const active=selectedIds.includes(x.id);return `<button class="skin-tile ${active?'selected':''}" onclick="selectSkin('${x.id}')">${art(x)}<span><strong>${x.name}</strong><small>${money(x.price)}${active?' · ВЫБРАН':''}</small></span></button>`}).join('')}
 function selectSkin(id){if(rolling)return;const i=selectedIds.indexOf(id);if(i>=0)selectedIds.splice(i,1);else{if(selectedIds.length>=6){notify('Можно добавить в один апгрейд максимум 6 скинов.');return}if(!inventory.some(x=>x.id===id))return;selectedIds.push(id);}selectedId=selectedIds[0]||null;if(selectedChancePreset){const total=getSelectedTotal();if(total){const expected=total/(selectedChancePreset/100);document.getElementById('targetMinPrice').value=Math.max(0,Math.floor(expected*.9));document.getElementById('targetMaxPrice').value=Math.ceil(expected*1.1);const match=catalog.filter(x=>x.price>=expected*.9&&x.price<=expected*1.1).sort((a,b)=>Math.abs(a.price-expected)-Math.abs(b.price-expected))[0];if(match)targetId=match.id;}}renderAll()}
 function renderTarget(){let t=getTarget();if(!t)return;document.getElementById('targetImg').src=t.image||'';document.getElementById('targetName').textContent=t.name;document.getElementById('targetPrice').textContent=money(t.price);let c=chance();document.getElementById('percent').textContent=c.toFixed(1)+'%';document.getElementById('chanceText').textContent=c.toFixed(1)+'%';document.getElementById('chanceBar').style.width=c+'%';document.querySelector('.progress').style.setProperty('--chance-deg',(c*3.6)+'deg');updateAdminChancePreview();document.getElementById('multiplier').textContent=getSelectedTotal()?(t.price/getSelectedTotal()).toFixed(1)+'x':'—';document.getElementById('upgradeButton').disabled=!getSelectedItems().length||rolling;document.getElementById('catalogCount').textContent=catalog.length.toLocaleString('ru-RU')+' СКИНОВ'}
@@ -957,12 +957,12 @@ prepareAdminWidgets();loadAdminLayout();
 
 // Firebase Google Authentication for YRTORUP (compat SDK, no build tools required).
 const firebaseConfig = {
-  apiKey: "AIzaSyAt9KY98AnLSyLDeyxPsx3cAbgqkQwhdao",
-  authDomain: "yrtorup-23d11.firebaseapp.com",
-  projectId: "yrtorup-23d11",
-  storageBucket: "yrtorup-23d11.firebasestorage.app",
-  messagingSenderId: "901170736115",
-  appId: "1:901170736115:web:7e1028fec1dba369198086"
+  apiKey: "AIzaSyCTOQRyrSLGCuPahCzeut0Fx4xDa2QJ0W8",
+  authDomain: "yrtorup.firebaseapp.com",
+  projectId: "yrtorup",
+  storageBucket: "yrtorup.firebasestorage.app",
+  messagingSenderId: "729736496483",
+  appId: "1:729736496483:web:fbca8be7bfe76208773f56"
 };
 // Укажи здесь email Google-аккаунта владельца. Только этот email увидит кнопку админ-панели.
 // ВАЖНО: это защита только для демо-интерфейса; настоящие админ-права нужно проверять на сервере.
