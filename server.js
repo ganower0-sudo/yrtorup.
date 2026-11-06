@@ -76,45 +76,90 @@ async function refreshPrices() {
 
 app.use(express.static(__dirname));
 
-// Подгружаем точные изображения предметов с LIS-SKINS, когда в основном CS2-каталоге нет изображения фазы.
-const lisImageCache = new Map();
-function lisSlug(itemName) {
-  let value = String(itemName || '').trim().toLowerCase();
-  value = value.replace(/^★\s*/, '★-').replace(/™/g, '').replace(/\s*\|\s*/g, '-');
-  value = value.replace(/[()]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
-  return encodeURI(value);
+// Точные изображения скинов и фаз Doppler из открытого CS2-каталога qwkdev/csapi.
+// В его V2-данных для каждой фазы Doppler есть отдельное поле phase и отдельный image URL.
+const skinImageCache = new Map();
+let csapiImageIndex = null;
+let csapiImageIndexTime = 0;
+let csapiImageIndexPromise = null;
+const CSAPI_V2_URL = 'https://raw.githubusercontent.com/qwkdev/csapi/main/data2.json';
+function normalizeSkinName(value) {
+  return String(value || '').toLowerCase()
+    .replace(/★/g, '')
+    .replace(/stattrak™?/g, '')
+    .replace(/souvenir/g, '')
+    .replace(/\(?(factory new|minimal wear|field-tested|well-worn|battle-scarred)\)?/g, '')
+    .replace(/[()]/g, ' ')
+    .replace(/[™']/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s*\|\s*/g, '|')
+    .trim();
+}
+function phaseFromName(value) {
+  const s = String(value || '').toLowerCase();
+  const m = s.match(/phase\s*([1-4])/i);
+  if (m) return `phase ${m[1]}`;
+  for (const phase of ['black pearl', 'sapphire', 'ruby', 'emerald']) if (s.includes(phase)) return phase;
+  return '';
+}
+async function getCsapiImageIndex() {
+  if (csapiImageIndex && Date.now() - csapiImageIndexTime < 24 * 60 * 60 * 1000) return csapiImageIndex;
+  if (csapiImageIndexPromise) return csapiImageIndexPromise;
+  csapiImageIndexPromise = (async () => {
+    const response = await fetch(CSAPI_V2_URL, {
+      headers: { Accept: 'application/json', 'User-Agent': 'YRTORUP/1.0 skin image catalog' },
+      signal: AbortSignal.timeout(30000)
+    });
+    if (!response.ok) throw new Error(`CS2 image catalog HTTP ${response.status}`);
+    const data = await response.json();
+    if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('CS2 image catalog has an unexpected format');
+    csapiImageIndex = data;
+    csapiImageIndexTime = Date.now();
+    return data;
+  })();
+  try { return await csapiImageIndexPromise; }
+  finally { csapiImageIndexPromise = null; }
+}
+function findCsapiImage(data, itemName) {
+  const wanted = normalizeSkinName(itemName);
+  const wantedPhase = phaseFromName(itemName);
+  const rows = Object.entries(data);
+  // First: exact normalized market/display name, which preserves the phase and wear.
+  for (const [fullName, row] of rows) {
+    if (normalizeSkinName(fullName) === wanted && row?.image) return row.image;
+  }
+  // Second: match the base skin plus the explicit Doppler phase. Never substitute another phase.
+  if (wantedPhase) {
+    for (const [, row] of rows) {
+      if (!row?.image || phaseFromName(row.phase || row['full-name'] || '') !== wantedPhase) continue;
+      const rowBase = normalizeSkinName(row.name || '');
+      const wantedBase = normalizeSkinName(itemName).replace(/\s*phase\s*[1-4]|\s*(ruby|sapphire|black pearl|emerald)/i, '').trim();
+      if (rowBase && (wantedBase.includes(rowBase) || rowBase.includes(wantedBase))) return row.image;
+    }
+  }
+  return null;
 }
 app.get('/api/skin-image', async (req, res) => {
   const name = String(req.query.name || '').trim();
   if (!name || name.length > 180) return res.status(400).end();
   const key = name.toLowerCase();
-  const cached = lisImageCache.get(key);
+  const cached = skinImageCache.get(key);
   if (cached && cached.expires > Date.now()) {
     if (cached.url) return res.redirect(302, cached.url);
     return res.status(404).end();
   }
   try {
-    const slug = lisSlug(name);
-    const pageUrl = `https://lis-skins.com/market/csgo/${slug}/`;
-    const response = await fetch(pageUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; YRTORUP-Demo/1.0)', Accept: 'text/html' },
-      signal: AbortSignal.timeout(12000)
-    });
-    if (!response.ok) throw new Error(`LIS-SKINS page HTTP ${response.status}`);
-    const html = await response.text();
-    const match = html.match(/(?:https?:)?\\?\/\\?\/assets\.lis-skins\.com\/(?:cdn-cgi\/image\/[^"'<> ]+\/)?(?:https?:\\?\/\\?\/assets\.lis-skins\.com\/)?market_images\/(\d+_[a-z])\.(?:png|webp|jpg)/i)
-      || html.match(/market_images\/(\d+_[a-z])\.(?:png|webp|jpg)/i);
-    if (!match) {
-      lisImageCache.set(key, { url: null, expires: Date.now() + 10 * 60 * 1000 });
+    const index = await getCsapiImageIndex();
+    const imageUrl = findCsapiImage(index, name);
+    if (!imageUrl || !/^https:\/\//i.test(imageUrl)) {
+      skinImageCache.set(key, { url: null, expires: Date.now() + 60 * 60 * 1000 });
       return res.status(404).end();
     }
-    const imageUrl = `https://assets.lis-skins.com/market_images/${match[1]}.png`;
-    lisImageCache.set(key, { url: imageUrl, expires: Date.now() + 24 * 60 * 60 * 1000 });
+    skinImageCache.set(key, { url: imageUrl, expires: Date.now() + 24 * 60 * 60 * 1000 });
     return res.redirect(302, imageUrl);
   } catch (error) {
-    console.warn('[YRTORUP LIS-SKINS image]', name, error.message);
-    lisImageCache.set(key, { url: null, expires: Date.now() + 5 * 60 * 1000 });
-    return res.status(404).end();
+    console.warn('[YRTORUP CS2 image catalog]', name, error.message);
+    return res.status(503).end();
   }
 });
 

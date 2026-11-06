@@ -18,4 +18,6 @@ Render должен быть Web Service (Node), Build Command: npm install, Sta
 - https://yrtorup.onrender.com/health — статус сервера и SkinCash
 - https://yrtorup.onrender.com/api/prices/RUB.json — JSON с ценами
 
+Источник изображений: открытый CS2-каталог qwkdev/csapi (изображения вариантов Doppler Phase 1–4, Ruby, Sapphire, Black Pearl и Emerald; LIS-SKINS больше не используется).
+
 Источник цен: SkinCash (USD), конвертация в RUB через публичный курс USD/RUB. Цены не гарантируются для каждого предмета: если SkinCash не публикует предмет, свежей цены для него не будет.
