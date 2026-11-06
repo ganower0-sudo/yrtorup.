@@ -75,6 +75,49 @@ async function refreshPrices() {
 }
 
 app.use(express.static(__dirname));
+
+// Подгружаем точные изображения предметов с LIS-SKINS, когда в основном CS2-каталоге нет изображения фазы.
+const lisImageCache = new Map();
+function lisSlug(itemName) {
+  let value = String(itemName || '').trim().toLowerCase();
+  value = value.replace(/^★\s*/, '★-').replace(/™/g, '').replace(/\s*\|\s*/g, '-');
+  value = value.replace(/[()]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+  return encodeURI(value);
+}
+app.get('/api/skin-image', async (req, res) => {
+  const name = String(req.query.name || '').trim();
+  if (!name || name.length > 180) return res.status(400).end();
+  const key = name.toLowerCase();
+  const cached = lisImageCache.get(key);
+  if (cached && cached.expires > Date.now()) {
+    if (cached.url) return res.redirect(302, cached.url);
+    return res.status(404).end();
+  }
+  try {
+    const slug = lisSlug(name);
+    const pageUrl = `https://lis-skins.com/market/csgo/${slug}/`;
+    const response = await fetch(pageUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; YRTORUP-Demo/1.0)', Accept: 'text/html' },
+      signal: AbortSignal.timeout(12000)
+    });
+    if (!response.ok) throw new Error(`LIS-SKINS page HTTP ${response.status}`);
+    const html = await response.text();
+    const match = html.match(/(?:https?:)?\\?\/\\?\/assets\.lis-skins\.com\/(?:cdn-cgi\/image\/[^"'<> ]+\/)?(?:https?:\\?\/\\?\/assets\.lis-skins\.com\/)?market_images\/(\d+_[a-z])\.(?:png|webp|jpg)/i)
+      || html.match(/market_images\/(\d+_[a-z])\.(?:png|webp|jpg)/i);
+    if (!match) {
+      lisImageCache.set(key, { url: null, expires: Date.now() + 10 * 60 * 1000 });
+      return res.status(404).end();
+    }
+    const imageUrl = `https://assets.lis-skins.com/market_images/${match[1]}.png`;
+    lisImageCache.set(key, { url: imageUrl, expires: Date.now() + 24 * 60 * 60 * 1000 });
+    return res.redirect(302, imageUrl);
+  } catch (error) {
+    console.warn('[YRTORUP LIS-SKINS image]', name, error.message);
+    lisImageCache.set(key, { url: null, expires: Date.now() + 5 * 60 * 1000 });
+    return res.status(404).end();
+  }
+});
+
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/api/prices/RUB.json', async (_req, res) => {
   res.set('Cache-Control', 'no-store');
