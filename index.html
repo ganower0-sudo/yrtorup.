@@ -401,7 +401,8 @@ const seed=[
  ['SG 553 | Army Sheen',110,'green'],['Dual Berettas | Contractor',135,'tan'],['FAMAS | Colony',160,'green'],
  ['MP9 | Sand Dashed',190,'tan'],['Tec-9 | Groundwater',230,'green'],['MAG-7 | Storm',280,'gray'],
 ['AK-47 | Redline',12450,'red'],['AWP | Asiimov',86200,'orange'],['M4A1-S | Printstream',74800,'white'],['USP-S | Kill Confirmed',39500,'purple'],['Glock-18 | Water Elemental',7900,'blue'],['Desert Eagle | Blaze',28350,'gold'],['AK-47 | Neon Rider',2006300,'purple'],['AWP | Asiimov',86200,'orange'],['★ Hand Wraps | Desert Shamagh',82690,'gold'],['★ Hand Wraps | Badlands',161880,'orange'],['★ Hand Wraps | Duct Tape',320260,'white'],['★ Hand Wraps | Spruce DDPAT',3500,'green'],['AWP | Gungnir',1113150,'blue'],['M4A4 | Howl',511646,'red'],['★ Huntsman Knife | Bright Water',5038,'blue'],['AK-47 | Fire Serpent',616505,'green'],['★ Bayonet | Doppler',177760,'purple'],['AWP | Dragon Lore',2450000,'gold'],['M4A4 | Neo-Noir',98000,'purple'],['AWP | Wildfire',72500,'red'],['AK-47 | Case Hardened',250000,'blue'],['★ Karambit | Doppler',780000,'purple'],['AWP | Medusa',670000,'purple'],['M4A1-S | Golden Coil',45000,'gold'],['FAMAS | Commemoration',24000,'gold'],['P250 | See Ya Later',9000,'green'],['Desert Eagle | Printstream',12000,'white'],['AK-47 | Vulcan',340000,'blue'],['★ Butterfly Knife | Fade',950000,'pink'],['Glock-18 | Fade',125000,'pink']].map((x,i)=>({id:'s'+i,name:x[0],price:x[1],color:x[2],image:'',rarity:'Скин CS2',type:x[0].split(' | ')[0],wear:'',priceSource:'fixed-demo'}));
-let catalog=[...seed],inventory=[],selectedId=null,selectedIds=[],targetId=seed[6].id,balance=500000,history=[],rolling=false,marketQuantities={};
+const seedUnique=[...new Map(seed.map(x=>[String(x.name||'').trim().toLowerCase(),x])).values()];
+let catalog=[...seedUnique],inventory=[],selectedId=null,selectedIds=[],targetId=seed[6].id,balance=500000,history=[],rolling=false,marketQuantities={};
 let fastSpinArmed=false,spinFinishTimer=null,spinEndTransform='';
 try{fastSpinArmed=localStorage.getItem('yrtorup-fast-spin')==='1';}catch(e){}
 const syncFastSpinButton=()=>{const b=document.getElementById('lightningBoost'),h=document.getElementById('lightningHint');if(b)b.classList.toggle('armed',fastSpinArmed);if(h)h.textContent=fastSpinArmed?'БЫСТРЫЙ РЕЖИМ ВКЛ':'БЫСТРЫЙ РЕЖИМ ВЫКЛ';};
@@ -778,7 +779,7 @@ async function loadCatalog(){
  const status=document.getElementById('priceStatus');
  applyAdminPriceOverrides();renderAdminPrices();
  if(status)status.textContent='Быстро загружаем каталог CS2 и актуальные цены с сервера…';
- const cacheKey='yrtorup-skins-images-cache-v10-ruby-image-fallback-no-graffiti';
+ const cacheKey='yrtorup-skins-images-cache-v11-deduped-fresh-images';
  const imageByExact=new Map(),imageByBase=new Map();
  let gameItems=[];
  // Изображения/названия кэшируются отдельно от цен: цены всегда запрашиваются заново с сервера.
@@ -881,7 +882,7 @@ const rubyKnifeModels=['Bayonet','Bowie Knife','Butterfly Knife','Falchion Knife
  catalog=[...merged.values()].filter(x=>!/(\bcharm\b|брелок)/i.test(String(x.name||'')+' '+String(x.type||''))).sort((a,b)=>a.name.localeCompare(b.name,'en'));
  const sharedFetch=await fetchSharedPrices();if(sharedFetch.ok)console.info('[YRTORUP] Общие цены загружены:',sharedFetch.count);
  applyAdminPriceOverrides();
- if(!catalog.length)catalog=seed.map(x=>({...x,price:0,priceSource:'unavailable'}));
+ if(!catalog.length)catalog=seedUnique.map(x=>({...x,price:0,priceSource:'unavailable'}));
  if(!targetId||!catalog.some(x=>x.id===targetId))targetId=catalog.find(x=>x.image&&x.price>=10)?.id||catalog.find(x=>x.image)?.id||catalog[0].id;
  if(selectedId&&!inventory.some(x=>x.id===selectedId))selectedId=null;
  const priced=catalog.filter(x=>x.price>=10).length,imgs=catalog.filter(x=>x.image).length;

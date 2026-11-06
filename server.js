@@ -74,7 +74,8 @@ async function refreshPrices() {
   finally { priceRefreshPromise = null; }
 }
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
+app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/api/prices/RUB.json', async (_req, res) => {
   res.set('Cache-Control', 'no-store');
   if (priceCache && Date.now() - priceCacheTime < PRICE_REFRESH_MS) return res.json(priceCache);
