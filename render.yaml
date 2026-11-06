@@ -5,4 +5,8 @@ services:
     plan: free
     buildCommand: npm install
     startCommand: npm start
-    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PRICE_REFRESH_MINUTES
+        value: 5
