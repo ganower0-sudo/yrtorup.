@@ -1,23 +1,15 @@
-YRTORUP — SkinCash (исправленная структура для GitHub)
+YRTORUP — обновление открытия кейсов
 
-ВАЖНО: этот архив сделан под структуру твоего GitHub-репозитория, где index.html, server.js, package.json и render.yaml лежат в корне.
+Что добавлено:
+- выбор количества открываемых кейсов от 1 до 10;
+- одновременное открытие выбранного количества кейсов;
+- отдельная красная кнопка «Мгновенно» без прокрутки рулетки;
+- отображение всех выпавших предметов после пакетного открытия;
+- сортировка скинов по цене в окне создания личного кейса (дешёвые / дорогие).
 
-Что загрузить в корень репозитория (заменить существующие файлы):
-- index.html
-- server.js
-- package.json
-- render.yaml
+Установка:
+1. Замените в корне GitHub-репозитория файлы index.html, server.js, package.json и render.yaml файлами из архива.
+2. Сделайте commit изменений.
+3. В Render выполните Manual Deploy → Deploy latest commit.
 
-README-RU.txt можно загрузить по желанию. Не нужно создавать папку public.
-
-Render должен быть Web Service (Node), Build Command: npm install, Start Command: npm start.
-После загрузки файлов запусти Manual Deploy → Deploy latest commit.
-
-Проверки после деплоя:
-- https://yrtorup.onrender.com/ — главная страница
-- https://yrtorup.onrender.com/health — статус сервера и SkinCash
-- https://yrtorup.onrender.com/api/prices/RUB.json — JSON с ценами
-
-Источник изображений: открытый CS2-каталог qwkdev/csapi (изображения вариантов Doppler Phase 1–4, Ruby, Sapphire, Black Pearl и Emerald; LIS-SKINS больше не используется).
-
-Источник цен: SkinCash (USD), конвертация в RUB через публичный курс USD/RUB. Цены не гарантируются для каждого предмета: если SkinCash не публикует предмет, свежей цены для него не будет.
+Все открытия остаются в деморежиме за виртуальные рубли сайта. Одно пакетное открытие списывает цену кейса, умноженную на выбранное количество.
