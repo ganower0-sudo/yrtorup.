@@ -786,16 +786,38 @@ function updateCaseOpenButtons(){
  const modal=document.getElementById('caseOpenModal');
  if(modal)modal.classList.toggle('case-multi-selected',qty>1);
 }
+function sellLastCaseDrop(){
+ const ids=Array.isArray(window.yrtorupLastCaseDropIds)?window.yrtorupLastCaseDropIds:[];
+ if(!ids.length){notify('Нет нового дропа для продажи.');return;}
+ const idSet=new Set(ids);
+ const items=inventory.filter(item=>idSet.has(item.id));
+ if(!items.length){notify('Этот дроп уже продан или отсутствует в инвентаре.');return;}
+ const total=items.reduce((sum,item)=>sum+Math.max(0,Number(item.price)||0),0);
+ inventory=inventory.filter(item=>!idSet.has(item.id));
+ selectedIds=selectedIds.filter(id=>!idSet.has(id));
+ if(selectedId&&idSet.has(selectedId))selectedId=null;
+ balance+=total;
+ window.yrtorupLastCaseDropIds=[];
+ saveState();renderAll();
+ const batch=document.getElementById('caseBatchResults');
+ if(batch){const btn=batch.querySelector('.case-sell-all-drop');if(btn){btn.disabled=true;btn.textContent='✓ ДРОП ПРОДАН · '+money(total);}}
+ notify('Весь дроп продан за '+money(total)+'.');
+}
 function finishCaseBatch(c,results){
- results.forEach(result=>{
-  inventory.push({...result,id:'case-drop-'+Date.now()+'-'+Math.random().toString(36).slice(2),wear:'Выпало из кейса'});
+ const batchStamp=Date.now()+'-'+Math.random().toString(36).slice(2);
+ window.yrtorupLastCaseDropIds=[];
+ results.forEach((result,index)=>{
+  const dropId='case-drop-'+batchStamp+'-'+index;
+  window.yrtorupLastCaseDropIds.push(dropId);
+  inventory.push({...result,id:dropId,wear:'Выпало из кейса'});
   caseOpenHistory.unshift({caseName:c.name,itemName:result.name,price:result.price,image:caseImage(result),time:new Date().toLocaleString('ru-RU')});publishCaseDrop(c,result);
  });
  caseOpenHistory=caseOpenHistory.slice(0,30);
  try{localStorage.setItem(accountStorageKey()+':case-history',JSON.stringify(caseOpenHistory));}catch(e){}
  saveState();renderAll();renderCases();
  const batch=document.getElementById('caseBatchResults');
- batch.innerHTML=results.map((r,i)=>`<div class="case-batch-result"><img loading="lazy" src="${escapeHtml(caseImage(r))}" alt=""><b title="${escapeHtml(r.name)}">${i+1}. ${escapeHtml(r.name)}</b><small>${money(r.price)}</small></div>`).join('');
+ window.yrtorupLastCaseDropIds=results.map((r,i)=>'case-drop-'+(window.yrtorupCaseBatchStamp||'')+'-'+i);
+ batch.innerHTML=results.map((r,i)=>`<div class="case-batch-result"><img loading="lazy" src="${escapeHtml(caseImage(r))}" alt=""><b title="${escapeHtml(r.name)}">${i+1}. ${escapeHtml(r.name)}</b><small>${money(r.price)}</small></div>`).join('')+`<div class="case-drop-actions"><button type="button" class="case-sell-all-drop" onclick="sellLastCaseDrop()">💰 ПРОДАТЬ ВЕСЬ ДРОП · ${money(results.reduce((sum,x)=>sum+Number(x.price||0),0))}</button></div>`;
  batch.classList.add('show');
  const first=results[0];if(first){document.getElementById('caseStageImage').src=caseImage(first)||caseArtwork(c);document.getElementById('caseResultImage').src=caseImage(first);document.getElementById('caseResultName').textContent=results.length===1?first.name:'Выпало предметов: '+results.length;document.getElementById('caseResultPrice').textContent='Общая стоимость: '+money(results.reduce((a,x)=>a+Number(x.price||0),0));document.getElementById('caseResultPanel').classList.add('show');}
  document.getElementById('caseModalStatus').textContent=results.length===1?'ТЕБЕ ВЫПАЛО!':'ОТКРЫТО КЕЙСОВ: '+results.length;
@@ -1487,6 +1509,13 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 </style>
 
 
+
+<style>
+.case-drop-actions{grid-column:1/-1;display:flex;justify-content:center;width:100%;margin:10px 0 4px}
+.case-sell-all-drop{border:1px solid #ffe000;border-radius:9px;padding:13px 22px;background:linear-gradient(180deg,#ffe45b,#ffbf00);color:#17120a;font-weight:1000;letter-spacing:.3px;cursor:pointer;box-shadow:0 0 18px #ffc80035}
+.case-sell-all-drop:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.case-sell-all-drop:disabled{opacity:.75;cursor:default;transform:none}
+</style>
 </body></html>
 
 <style>
