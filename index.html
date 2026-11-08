@@ -241,6 +241,23 @@ input:focus,select:focus{outline:1px solid #ffe000;border-color:#ffe000}
 
 /* Functional community update v2 */
 .achievements-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.achievement-card{background:linear-gradient(145deg,#202126,#121316);border:1px solid #34363d;border-radius:9px;padding:14px;display:flex;gap:12px;align-items:center}.achievement-card.unlocked{border-color:#8d7600;background:linear-gradient(145deg,#302a0e,#151515)}.achievement-icon{width:48px;height:48px;flex:0 0 48px;border-radius:10px;display:grid;place-items:center;background:#292a2f;color:#777;font-size:24px}.achievement-card.unlocked .achievement-icon{background:#514200;color:#ffe000}.achievement-card h3{font-size:12px;margin:0 0 4px}.achievement-card p{font-size:9px;color:#999;margin:0}.achievement-state{font-size:8px;font-weight:900;color:#888;margin-top:6px}.achievement-card.unlocked .achievement-state{color:#ffe000}.leaderboard-note{color:#999;font-size:10px;margin:0 0 12px}.jackpot-round-note{font-size:9px;color:#9b9da4;text-align:center;margin:10px 0}.collection-progress{height:5px;background:#303137;border-radius:8px;overflow:hidden;margin:10px 0 6px}.collection-progress span{display:block;height:100%;background:#ffe000}.collection-card small{color:#999;font-size:9px}@media(max-width:800px){.achievements-grid{grid-template-columns:1fr 1fr}}@media(max-width:520px){.achievements-grid{grid-template-columns:1fr}}
+
+/* Five simultaneous case reels: selected quantity is visible before spin */
+.case-open-card{max-height:94vh;overflow-y:auto;overscroll-behavior:contain}
+.case-multi-wrap{max-height:430px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#8d6b00 #111}
+.case-multi-reels{display:flex;flex-direction:column;gap:6px}
+.case-reel-lane{min-height:68px;grid-template-columns:54px minmax(0,1fr);padding:3px 7px}
+.case-reel-lane .case-reel{height:64px!important}
+.case-reel-lane .case-reel-card{height:58px!important;flex-basis:86px!important}
+.case-reel-lane .case-reel-card img{height:34px!important}
+.case-reel-lane .case-reel-pointer{left:calc(54px + (100% - 54px)/2)}
+.case-open-card.case-multi-selected .case-multi-wrap{border-color:#9b7400;box-shadow:inset 0 0 18px #ffcc0015}
+@media(max-width:650px){
+ .case-open-card{width:min(96vw,680px);max-height:94vh}
+ .case-multi-wrap{max-height:390px}
+ .case-reel-lane{grid-template-columns:42px minmax(0,1fr)}
+ .case-reel-lane .case-reel-pointer{left:calc(42px + (100% - 42px)/2)}
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -743,7 +760,7 @@ function selectCase(id){
  document.getElementById('caseStage').classList.remove('case-opening','case-won','case-entered');void document.getElementById('caseStage').offsetWidth;document.getElementById('caseStage').classList.add('case-entered');
  document.getElementById('caseResultPanel').classList.remove('show');
  const pool=renderCaseContents(c);
- const multi=document.getElementById('caseMultiReels');multi.innerHTML='';for(let lane=0;lane<5;lane++){const row=document.createElement('div');row.className='case-reel-lane';row.innerHTML=`<span>КЕЙС ${lane+1}</span><div class="case-reel-pointer"></div><div class="case-reel"><div class="case-reel-track"></div></div><div class="case-reel-shade"></div>`;const tr=row.querySelector('.case-reel-track');tr.innerHTML=Array.from({length:15},(_,i)=>caseReelCard(pool[i%Math.max(pool.length,1)]||{name:'Загрузка…',price:0})).join('');multi.appendChild(row);if(lane>0)row.style.display='none';}
+ const multi=document.getElementById('caseMultiReels');multi.innerHTML='';for(let lane=0;lane<5;lane++){const row=document.createElement('div');row.className='case-reel-lane';row.innerHTML=`<span>КЕЙС ${lane+1}</span><div class="case-reel-pointer"></div><div class="case-reel"><div class="case-reel-track"></div></div><div class="case-reel-shade"></div>`;const tr=row.querySelector('.case-reel-track');tr.innerHTML=Array.from({length:15},(_,i)=>caseReelCard(pool[i%Math.max(pool.length,1)]||{name:'Загрузка…',price:0})).join('');multi.appendChild(row);} 
  document.getElementById('caseModalStatus').textContent='Цена открытия: '+money(c.price)+' · дорогие предметы выпадают реже · деморежим';
  const b=document.getElementById('caseModalButton');b.disabled=false;document.getElementById('caseOpenQuantity').value='1';document.getElementById('caseBatchResults').classList.remove('show');document.getElementById('caseBatchResults').innerHTML='';document.getElementById('caseInstantButton').disabled=false;updateCaseOpenButtons();
  const m=document.getElementById('caseOpenModal');m.classList.add('open');m.setAttribute('aria-hidden','false');
@@ -755,6 +772,19 @@ function updateCaseOpenButtons(){
  const total=Number(c.price||0)*qty;
  const totalEl=document.getElementById('caseBatchTotal');if(totalEl)totalEl.textContent='Итого: '+money(total);
  const btn=document.getElementById('caseModalButton');if(btn&&!caseOpening)btn.textContent='ОТКРЫТЬ '+qty+' '+(qty===1?'КЕЙС':qty<5?'КЕЙСА':'КЕЙСОВ')+' ЗА '+money(total);
+ // Показываем столько отдельных рулеток, сколько выбрано кейсов — ещё до нажатия открытия.
+ const multi=document.getElementById('caseMultiReels');
+ if(multi){
+   const lanes=Array.from(multi.querySelectorAll('.case-reel-lane'));
+   lanes.forEach((lane,i)=>{
+     lane.style.display=i<qty?'grid':'none';
+     const label=lane.querySelector(':scope > span');
+     if(label)label.textContent='КЕЙС '+(i+1);
+   });
+   multi.dataset.visibleLanes=String(qty);
+ }
+ const modal=document.getElementById('caseOpenModal');
+ if(modal)modal.classList.toggle('case-multi-selected',qty>1);
 }
 function finishCaseBatch(c,results){
  results.forEach(result=>{
