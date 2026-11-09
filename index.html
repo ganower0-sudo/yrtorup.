@@ -1662,6 +1662,11 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 @keyframes yrCaseLidRevealV2{0%{transform:rotateX(-118deg) translateY(-10px)}100%{transform:rotateX(-132deg) translateY(-18px)}}
 @keyframes yrCasePrizeV2{0%{opacity:0;transform:scale(.58) translateY(22px);filter:brightness(2.4)}100%{opacity:1;transform:scale(1.08) translateY(0);filter:drop-shadow(0 0 26px #ffe00088)}}
 @media(prefers-reduced-motion:reduce){
+ /* Opening a case is an explicit action: keep its physical drop and lid animation visible. */
+ .case-stage.case-opening .case-drop-box{animation-duration:7.2s!important;animation-iteration-count:1!important}
+ .case-stage.case-opening .case-drop-lid{animation-duration:7.2s!important;animation-iteration-count:1!important}
+ .case-stage.case-opening .case-drop-glow{animation-duration:7.2s!important;animation-iteration-count:1!important}
+ .case-stage.case-opening:after{animation-duration:.8s!important;animation-delay:.9s!important;animation-iteration-count:1!important}
  .case-stage.case-won .case-drop-box,.case-stage.case-instant .case-drop-box{opacity:0!important;animation:none!important}
  .case-stage.case-won .case-drop-lid{transform:rotateX(-118deg)}
  .case-stage.case-won #caseStageImage{opacity:1;transform:scale(1.08)}
