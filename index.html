@@ -1543,6 +1543,29 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 @keyframes yrCaseCharge{0%,70%{opacity:.3;transform:scale(.8)}90%,100%{opacity:1;transform:scale(1.3)}}
 @media(prefers-reduced-motion:reduce){.case-stage .case-drop-box,.case-stage .case-drop-lid,.case-stage .case-drop-glow{animation:none!important;opacity:1}}
 </style>
+<style id="yrtorup-smooth-ui">
+/* Shared motion layer for page changes and interactive controls. */
+:root{--yr-ease:cubic-bezier(.22,.72,.22,1);--yr-smooth:240ms;scroll-behavior:smooth}
+@media(prefers-reduced-motion:no-preference){
+ .page.active{animation:yrPageEnter 260ms var(--yr-ease) both}
+ .case-open-modal.open,.case-creator-modal.open,.public-drop-modal.open{animation:yrModalBackdrop 220ms ease-out both}
+ .case-open-modal.open .case-open-card,.case-creator-modal.open .case-creator-card,.public-drop-modal.open .public-drop-card{animation:yrModalCard 280ms var(--yr-ease) both}
+ .nav button,button,.profile,.skin-tile,.catalog-row,.market-card,.case-card,.collection-card,.mission-card,.achievement-card,.searchrow input,.filters input{transition:color var(--yr-smooth) var(--yr-ease),background-color var(--yr-smooth) var(--yr-ease),border-color var(--yr-smooth) var(--yr-ease),box-shadow var(--yr-smooth) var(--yr-ease),filter var(--yr-smooth) var(--yr-ease),transform var(--yr-smooth) var(--yr-ease)}
+ .primary:hover,.secondary:hover,.sell-button:hover,.case-sell-all-drop:hover,.case-instant-button:hover{transform:translateY(-2px);box-shadow:0 8px 22px #0005,0 0 18px #ffe00020}
+ button:active:not(:disabled){transform:translateY(0) scale(.98)}
+ .skin-tile:hover,.catalog-row:hover,.market-card:hover,.case-card:hover,.collection-card:hover,.mission-card:hover,.achievement-card:hover{transform:translateY(-3px);border-color:#746600;box-shadow:0 12px 28px #0005}
+ .searchrow input:focus,.filters input:focus{box-shadow:0 0 0 3px #ffe00020}
+ .market-card .art img,.case-card-art img{transition:transform 360ms var(--yr-ease),filter 360ms var(--yr-ease)}
+ .market-card:hover .art img,.case-card:hover .case-card-art img{transform:scale(1.045);filter:drop-shadow(0 8px 12px #0009)}
+}
+@keyframes yrPageEnter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes yrModalBackdrop{from{opacity:0}to{opacity:1}}
+@keyframes yrModalCard{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){
+ :root{scroll-behavior:auto}
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
+}
+</style>
 </body></html>
 
 <style>
