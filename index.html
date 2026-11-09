@@ -689,10 +689,10 @@ function pickWeighted(items,weights){
 }
 const CASE_ART_CELLS={ruby:0,pearl:1,emerald:2,sapphire:3,amethyst:4,budget:5,warmup:6,fire:7,royal:8,dragon:9,diamond:10,ak:11,awp:12,m4:13,knife:14,sixseven:15,patapim:16,cat:17,troll:18,royalblue:19};
 function caseArtwork(c){
- if(c&&c.personalOwner){if(c.coverImage)return c.coverImage;return `case-art/${CASE_ART_CELLS[c.customArtKey]??CASE_ART_CELLS.royal}.jpg`;}
+ if(c&&c.personalOwner){if(c.coverImage)return c.coverImage;return `case-art/${CASE_ART_CELLS[c.customArtKey]??CASE_ART_CELLS.royal}.png`;}
  const n=String(c.name||'').toLowerCase(),f=String(c.filter||'').toLowerCase();let key;
  if(/six seven|67/.test(n))key='sixseven';else if(/patapim|brbr|brr brr/.test(n))key='patapim';else if(/кот/.test(n))key='cat';else if(/тролл|troll/.test(n))key='troll';else if(/сапфировая корона|император|властелин/.test(n))key='royalblue';else if(/королев|корон|трон/.test(n))key='royal';else if(/дракон/.test(n))key='dragon';else if(/бриллиант|diamond/.test(n))key='diamond';else if(/жемч|pearl|чёрн|черн/.test(n))key='pearl';else if(/изумруд|emerald|гамма/.test(n))key='emerald';else if(/сапфир|ледян|синий|шторм/.test(n))key='sapphire';else if(/аметист|фиолет|неон|doppler|диско/.test(n))key='amethyst';else if(/руб|ruby|кров|бургунд|красн/.test(n))key='ruby';else if(/бюджет|старт/.test(n))key='budget';else if(/размин/.test(n))key='warmup';else if(/огонь|первый нож|плам/.test(n))key='fire';else if(/ak-47|калаш/.test(n)||f==='ak')key='ak';else if(/awp|снайпер/.test(n)||f==='awp')key='awp';else if(/m4/.test(n))key='m4';else if(/нож|knife|дождь нож/.test(n)||f==='knife')key='knife';else if(/оруж|винтов|rifle/.test(n))key='ak';else{const keys=['ruby','pearl','emerald','sapphire','amethyst','fire','diamond','warmup'];let h=0;for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))>>>0;key=keys[h%keys.length];}
- return `case-art/${CASE_ART_CELLS[key]??CASE_ART_CELLS.ruby}.jpg`;
+ return `case-art/${CASE_ART_CELLS[key]??CASE_ART_CELLS.ruby}.png`;
 }
 function caseArtworkStyle(c){const art=caseArtwork(c);return `background-image:url("${escapeHtml(art)}");background-size:contain;background-position:center;background-repeat:no-repeat`;}
 function setCaseArtwork(el,art){if(!el)return;el.style.backgroundImage=`url(${JSON.stringify(art)})`;el.style.backgroundSize='contain';el.style.backgroundPosition='center';el.style.backgroundRepeat='no-repeat';}
@@ -713,7 +713,7 @@ function renderCases(){
   {id:'premium',title:'Дорогие кейсы · от 100 000 ₽',desc:'Премиальные кейсы с дорогими возможными наградами',icon:'♛',items:all.filter(c=>Number(c.price)>=100000)},
   {id:'special',title:'Особые кейсы',desc:'Авторские коллекции с уникальной тематикой',icon:'✦',items:all.filter(c=>c.category==='По цене'&&Number(c.price)>=10000&&Number(c.price)<100000)}
  ];
-  const card=c=>`<button class="case-card" type="button" onclick="selectCase('${c.id}')"><div class="case-card-art" style="--case-accent:${c.accent}"><div class="case-art-sprite" role="img" aria-label="Кейс ${escapeHtml(c.name)}" style="${caseArtworkStyle(c)}"></div></div><small>${c.personalOwner?'МОЙ АВТОРСКИЙ КЕЙС':'YRTORUP CASE SERIES'}</small><h3>${escapeHtml(c.name)}</h3><span class="case-card-price">${money(c.price)}</span></button>`;
+  const card=c=>`<button class="case-card" type="button" onclick="selectCase('${c.id}')"><div class="case-card-art" style="--case-accent:${c.accent}"><img class="case-art-image" loading="lazy" decoding="async" src="${escapeHtml(caseArtwork(c))}" alt="Кейс ${escapeHtml(c.name)}"></div><small>${c.personalOwner?'МОЙ АВТОРСКИЙ КЕЙС':'YRTORUP CASE SERIES'}</small><h3>${escapeHtml(c.name)}</h3><span class="case-card-price">${money(c.price)}</span></button>`;
  host.innerHTML=groups.filter(g=>g.items.length).map(g=>`<section class="case-section" id="case-section-${g.id}"><div class="case-section-head"><span class="case-section-icon">${g.icon}</span><div><h2>${g.title}</h2><p>${g.desc}</p></div><span class="case-see">${g.items.length} кейсов</span></div><div class="case-grid">${g.items.map(card).join('')}</div></section>`).join('')||'<div class="empty-big">Кейсы не найдены.</div>';
  renderCaseHistory();
 }
@@ -779,6 +779,7 @@ function sellLastCaseDrop(){
  notify('Весь дроп продан за '+money(total)+'.');
 }
 function finishCaseBatch(c,results){
+ const modalCard=document.getElementById('caseStage')?.closest('.case-open-card');modalCard?.classList.remove('case-spinning');modalCard?.style.removeProperty('--case-reel-overlay-y');
  const batchStamp=Date.now()+'-'+Math.random().toString(36).slice(2);
  window.yrtorupLastCaseDropIds=[];
  results.forEach((result,index)=>{
@@ -807,17 +808,19 @@ function confirmOpenCase(instant=false){
  const pool=buildCasePool(c);if(!pool.length){document.getElementById('caseModalStatus').textContent='Каталог скинов ещё загружается. Попробуй через несколько секунд.';return;}
  caseOpening=true;balance-=total;setBalance();renderCases();
  const results=Array.from({length:qty},()=>weightedCaseDrop(pool,Number(c.price)||1));
- const stage=document.getElementById('caseStage'),btn=document.getElementById('caseModalButton'),instantBtn=document.getElementById('caseInstantButton');
+ const stage=document.getElementById('caseStage'),btn=document.getElementById('caseModalButton'),instantBtn=document.getElementById('caseInstantButton'),modalCard=stage.closest('.case-open-card');
+ modalCard?.classList.remove('case-spinning');modalCard?.style.removeProperty('--case-reel-overlay-y');
  document.getElementById('caseBatchResults').classList.remove('show');document.getElementById('caseBatchResults').innerHTML='';document.getElementById('caseResultPanel').classList.remove('show');
  btn.disabled=true;instantBtn.disabled=true;btn.textContent='ОТКРЫВАЕМ…';document.getElementById('caseModalStatus').textContent=instant?'Мгновенное открытие '+qty+' кейсов…':'Одновременно открываем '+qty+' кейсов…';
  const multi=document.getElementById('caseMultiReels');
  Array.from(multi.children).forEach((row,i)=>{row.style.display=i<qty?'grid':'none';});
  if(instant){stage.classList.add('case-instant');finishCaseBatch(c,results);return;}
+ if(qty===1&&modalCard){modalCard.style.setProperty('--case-reel-overlay-y',`${stage.offsetTop+stage.offsetHeight/2}px`);modalCard.classList.add('case-spinning');}
  const lanes=Array.from(multi.children).slice(0,qty);lanes.forEach((row,lane)=>{
   const track=row.querySelector('.case-reel-track'),reel=row.querySelector('.case-reel'),winner=results[lane];
   const stopIndex=43;const sequence=Array.from({length:48},(_,i)=>i===stopIndex?winner:pool[Math.floor(Math.random()*pool.length)]);
   track.innerHTML=sequence.map(caseReelCard).join('');track.style.transition='none';track.style.transform='translateX(0)';
-  const cardWidth=93,targetX=stopIndex*cardWidth-(reel.clientWidth/2-cardWidth/2);
+  const cardWidth=track.firstElementChild?.getBoundingClientRect().width||93,gap=parseFloat(getComputedStyle(track).gap)||7,cardStep=cardWidth+gap,targetX=stopIndex*cardStep-(reel.clientWidth/2-cardWidth/2);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{track.style.transition='transform 7.2s cubic-bezier(.08,.72,.08,1)';track.style.transform=`translateX(-${targetX}px)`;}));
  });
  stage.classList.add('case-opening');
@@ -1666,7 +1669,19 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 @media(max-width:700px){.case-card-art .case-art-sprite{width:min(100%,105px);height:min(100%,105px)}.case-stage .case-stage-art{width:min(190px,72%)}}
 .case-card-art .case-art-sprite{width:min(100%,132px);height:min(100%,132px);background-size:contain!important}
 .case-stage .case-stage-art{width:min(340px,42vw);height:min(300px,78%);aspect-ratio:1;background-size:contain!important;background-position:center!important}
+.case-card-art .case-art-image{width:100%;height:100%;object-fit:contain;display:block;mix-blend-mode:screen;filter:drop-shadow(0 8px 12px #000a);}
 .case-stage .case-drop-box{display:none!important}
-.case-stage.case-opening .case-stage-art{animation:yrCaseImageDrop 7.2s cubic-bezier(.18,.72,.2,1) both!important}
-@keyframes yrCaseImageDrop{0%{opacity:0;transform:translateY(-95px) scale(.65) rotate(-8deg);filter:drop-shadow(0 22px 20px #000d)}12%{opacity:1;transform:translateY(8px) scale(1.06) rotate(3deg)}18%{transform:translateY(0) scale(1) rotate(0)}28%,68%{transform:translateY(0) rotate(0)}31%,37%,43%,49%,55%,61%{transform:translateX(-3px) rotate(-1deg)}34%,40%,46%,52%,58%,64%{transform:translateX(3px) rotate(1deg)}78%{opacity:1;transform:translateY(0) scale(1.08);filter:drop-shadow(0 0 32px var(--case-accent,#ffe000))}88%,100%{opacity:0;transform:translateY(-18px) scale(1.22);filter:drop-shadow(0 0 42px var(--case-accent,#ffe000))}}
+.case-stage.case-opening .case-stage-art{opacity:.5!important;filter:blur(7px) saturate(.75) drop-shadow(0 0 30px var(--case-accent,#ffe000))!important;animation:yrCaseBackdrop 7.2s cubic-bezier(.18,.72,.2,1) both!important}
+@keyframes yrCaseBackdrop{0%{opacity:1;transform:translateY(-72px) scale(.78);filter:blur(0) saturate(1.1)}10%{opacity:.92;transform:translateY(0) scale(1.05)}18%{opacity:.75;transform:scale(1.02)}28%,100%{opacity:.5;transform:scale(1.08)}}
+.case-open-card.case-spinning .case-reel-wrap{position:absolute!important;left:14px;right:14px;top:var(--case-reel-overlay-y);z-index:20!important;transform:translateY(-50%);margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;pointer-events:none}
+.case-open-card.case-spinning .case-reel-lane{display:block!important;position:relative;min-height:158px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;overflow:visible!important}
+.case-open-card.case-spinning .case-reel-lane>span{display:none!important}
+.case-open-card.case-spinning .case-reel-lane .case-reel{height:148px!important;overflow:hidden!important;border:0!important;border-radius:0!important;background:transparent!important}
+.case-open-card.case-spinning .case-reel-lane .case-reel-card{flex:0 0 148px!important;height:138px!important;padding:8px!important;border:1px solid #ffffff36!important;border-radius:8px!important;background:linear-gradient(180deg,#dbe6ee88,#737f8c66 72%,#df47edaa)!important;box-shadow:0 6px 20px #0005!important;backdrop-filter:blur(5px)}
+.case-open-card.case-spinning .case-reel-lane .case-reel-card img{height:92px!important;filter:drop-shadow(0 4px 8px #0009)!important}
+.case-open-card.case-spinning .case-reel-lane .case-reel-card b,.case-open-card.case-spinning .case-reel-lane .case-reel-card small{display:none!important}
+.case-open-card.case-spinning .case-reel-lane .case-reel-pointer{left:50%!important;top:10px!important;bottom:10px!important;width:3px!important;z-index:6!important;background:#fff46b!important;box-shadow:0 0 14px #fff46b,0 0 28px #ffca31!important}
+.case-open-card.case-spinning .case-reel-lane .case-reel-pointer:before{border-top-color:#fff46b!important}
+.case-open-card.case-spinning .case-reel-wrap:after{content:"";position:absolute;left:50%;top:50%;width:208px;height:208px;transform:translate(-50%,-50%);border:4px solid #ffffff49;border-radius:50%;background:radial-gradient(circle, #ffffff20 0 54%,#ffffff12 58%,transparent 67%);box-shadow:inset 0 0 30px #ffffff42,0 0 20px #d6e5ff44;pointer-events:none;z-index:5}
+@media(max-width:700px){.case-open-card.case-spinning .case-reel-wrap{left:4px;right:4px}.case-open-card.case-spinning .case-reel-lane .case-reel-card{flex-basis:112px!important;height:124px!important}.case-open-card.case-spinning .case-reel-wrap:after{width:174px;height:174px}}
 </style>
