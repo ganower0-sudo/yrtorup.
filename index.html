@@ -757,7 +757,7 @@ function selectCase(id){
  selectedCaseId=id;casePendingResult=null;
  document.getElementById('caseModalTitle').textContent=c.name;
  document.getElementById('caseStageImage').src=caseArtwork(c);
- document.getElementById('caseStage').classList.remove('case-opening','case-won','case-entered');void document.getElementById('caseStage').offsetWidth;document.getElementById('caseStage').classList.add('case-entered');
+ const stage=document.getElementById('caseStage');stage.classList.remove('case-opening','case-won','case-entered','case-instant');void stage.offsetWidth;
  document.getElementById('caseResultPanel').classList.remove('show');
  const pool=renderCaseContents(c);
  const multi=document.getElementById('caseMultiReels');multi.innerHTML='';for(let lane=0;lane<5;lane++){const row=document.createElement('div');row.className='case-reel-lane';row.innerHTML=`<span>КЕЙС ${lane+1}</span><div class="case-reel-pointer"></div><div class="case-reel"><div class="case-reel-track"></div></div><div class="case-reel-shade"></div>`;const tr=row.querySelector('.case-reel-track');tr.innerHTML=Array.from({length:15},(_,i)=>caseReelCard(pool[i%Math.max(pool.length,1)]||{name:'Загрузка…',price:0})).join('');multi.appendChild(row);} 
@@ -837,7 +837,7 @@ function confirmOpenCase(instant=false){
  btn.disabled=true;instantBtn.disabled=true;btn.textContent='ОТКРЫВАЕМ…';document.getElementById('caseModalStatus').textContent=instant?'Мгновенное открытие '+qty+' кейсов…':'Одновременно открываем '+qty+' кейсов…';
  const multi=document.getElementById('caseMultiReels');
  Array.from(multi.children).forEach((row,i)=>{row.style.display=i<qty?'grid':'none';});
- if(instant){finishCaseBatch(c,results);return;}
+ if(instant){stage.classList.add('case-instant');finishCaseBatch(c,results);return;}
  const lanes=Array.from(multi.children).slice(0,qty);lanes.forEach((row,lane)=>{
   const track=row.querySelector('.case-reel-track'),reel=row.querySelector('.case-reel'),winner=results[lane];
   const stopIndex=43;const sequence=Array.from({length:48},(_,i)=>i===stopIndex?winner:pool[Math.floor(Math.random()*pool.length)]);
@@ -1616,4 +1616,55 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 .under.steam-withdraw-stat .steam-stat-logo img{width:100%!important;height:100%!important;object-fit:contain!important;padding:10px!important;border-radius:50%!important;background:radial-gradient(circle at 35% 25%,#252a35,#080a10 72%)!important;filter:brightness(0) invert(1)!important}
 .under.steam-withdraw-stat:hover .steam-stat-logo{transform:translateY(-50%) scale(1.05)!important;box-shadow:0 0 14px #ffe00080,0 0 32px #ffe00035!important}
 @media(max-width:650px){.under.steam-withdraw-stat{padding-right:94px!important;min-height:92px!important}.under.steam-withdraw-stat .steam-stat-logo{right:12px!important;width:64px!important;height:64px!important}}
+</style>
+
+<style id="yrtorup-case-opening-v2">
+/* Start the physical case animation when the opening starts, then reveal the won skin. */
+.case-stage .case-drop-box{opacity:0;transform:translate(-50%,-50%);perspective:700px}
+.case-stage:not(.case-opening):not(.case-won):not(.case-instant) .case-drop-box{opacity:1;transform:translate(-50%,-50%);animation:none}
+.case-stage.case-opening .case-drop-box{opacity:1;animation:yrCaseOpeningV2 7.2s cubic-bezier(.16,.82,.18,1) both}
+.case-stage.case-opening .case-drop-lid{animation:yrCaseOpeningLidV2 7.2s cubic-bezier(.2,.72,.18,1) both;transform-style:preserve-3d;backface-visibility:hidden}
+.case-stage.case-opening .case-drop-glow{animation:yrCaseOpeningGlowV2 7.2s ease-out both}
+.case-stage.case-opening:after{content:"";position:absolute;z-index:3;left:50%;top:76%;width:16px;height:16px;border:2px solid #ffd95a;border-radius:50%;box-shadow:0 0 18px #ffb81f;opacity:0;pointer-events:none;animation:yrCaseImpactV2 .8s .9s cubic-bezier(.1,.72,.2,1) both}
+.case-stage.case-won .case-drop-box{opacity:0;animation:yrCaseRevealV2 .58s cubic-bezier(.16,.8,.2,1) both}
+.case-stage.case-won .case-drop-lid{animation:yrCaseLidRevealV2 .46s ease-out both}
+.case-stage.case-won #caseStageImage{animation:yrCasePrizeV2 .52s .08s cubic-bezier(.16,.8,.2,1) both}
+.case-stage.case-instant .case-drop-box{display:none}
+@keyframes yrCaseOpeningV2{
+ 0%{opacity:0;transform:translate(-50%,-175%) scale(.72) rotate(-8deg)}
+ 15%{opacity:1;transform:translate(-50%,-42%) scale(1.08) rotate(3deg)}
+ 21%{transform:translate(-50%,-56%) scale(.96) rotate(-2deg)}
+ 27%{transform:translate(-50%,-49%) scale(1.02) rotate(1deg)}
+ 33%{transform:translate(-50%,-50%) scale(1) rotate(0)}
+ 39%,51%,63%,75%{transform:translate(-50%,-50%) rotate(0)}
+ 42%,66%{transform:translate(calc(-50% - 4px),-50%) rotate(-1.4deg)}
+ 45%,69%{transform:translate(calc(-50% + 4px),-50%) rotate(1.4deg)}
+ 48%,72%{transform:translate(-50%,-50%) rotate(0)}
+ 84%{transform:translate(-50%,-50%) scale(1.025)}
+ 94%,100%{opacity:1;transform:translate(-50%,-50%) scale(1.035)}
+}
+@keyframes yrCaseOpeningLidV2{
+ 0%,82%{transform:rotateX(0)}
+ 87%{transform:rotateX(-16deg)}
+ 94%,100%{transform:rotateX(-118deg) translateY(-10px)}
+}
+@keyframes yrCaseOpeningGlowV2{
+ 0%,100%{opacity:.18;transform:scale(.72)}
+ 17%{opacity:1;transform:scale(1.45)}
+ 28%,74%{opacity:.34;transform:scale(.9)}
+ 91%{opacity:1;transform:scale(1.6)}
+}
+@keyframes yrCaseImpactV2{
+ 0%{opacity:.9;transform:translate(-50%,-50%) scale(.2)}
+ 100%{opacity:0;transform:translate(-50%,-50%) scale(13)}
+}
+@keyframes yrCaseRevealV2{0%{opacity:1;transform:translate(-50%,-50%) scale(1.035)}100%{opacity:0;transform:translate(-50%,-72%) scale(1.22)}}
+@keyframes yrCaseLidRevealV2{0%{transform:rotateX(-118deg) translateY(-10px)}100%{transform:rotateX(-132deg) translateY(-18px)}}
+@keyframes yrCasePrizeV2{0%{opacity:0;transform:scale(.58) translateY(22px);filter:brightness(2.4)}100%{opacity:1;transform:scale(1.08) translateY(0);filter:drop-shadow(0 0 26px #ffe00088)}}
+@media(prefers-reduced-motion:reduce){
+ .case-stage.case-won .case-drop-box,.case-stage.case-instant .case-drop-box{opacity:0!important;animation:none!important}
+ .case-stage.case-won .case-drop-lid{transform:rotateX(-118deg)}
+ .case-stage.case-won #caseStageImage{opacity:1;transform:scale(1.08)}
+ .case-stage.case-opening:after{display:none}
+}
 </style>
