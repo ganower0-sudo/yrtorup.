@@ -689,13 +689,13 @@ function pickWeighted(items,weights){
 }
 const CASE_ART_CELLS={ruby:0,pearl:1,emerald:2,sapphire:3,amethyst:4,budget:5,warmup:6,fire:7,royal:8,dragon:9,diamond:10,ak:11,awp:12,m4:13,knife:14,sixseven:15,patapim:16,cat:17,troll:18,royalblue:19};
 function caseArtwork(c){
- if(c&&c.personalOwner){if(c.coverImage)return c.coverImage;return CASE_ART_CELLS[c.customArtKey]??CASE_ART_CELLS.royal;}
+ if(c&&c.personalOwner){if(c.coverImage)return c.coverImage;return `case-art/${CASE_ART_CELLS[c.customArtKey]??CASE_ART_CELLS.royal}.jpg`;}
  const n=String(c.name||'').toLowerCase(),f=String(c.filter||'').toLowerCase();let key;
  if(/six seven|67/.test(n))key='sixseven';else if(/patapim|brbr|brr brr/.test(n))key='patapim';else if(/кот/.test(n))key='cat';else if(/тролл|troll/.test(n))key='troll';else if(/сапфировая корона|император|властелин/.test(n))key='royalblue';else if(/королев|корон|трон/.test(n))key='royal';else if(/дракон/.test(n))key='dragon';else if(/бриллиант|diamond/.test(n))key='diamond';else if(/жемч|pearl|чёрн|черн/.test(n))key='pearl';else if(/изумруд|emerald|гамма/.test(n))key='emerald';else if(/сапфир|ледян|синий|шторм/.test(n))key='sapphire';else if(/аметист|фиолет|неон|doppler|диско/.test(n))key='amethyst';else if(/руб|ruby|кров|бургунд|красн/.test(n))key='ruby';else if(/бюджет|старт/.test(n))key='budget';else if(/размин/.test(n))key='warmup';else if(/огонь|первый нож|плам/.test(n))key='fire';else if(/ak-47|калаш/.test(n)||f==='ak')key='ak';else if(/awp|снайпер/.test(n)||f==='awp')key='awp';else if(/m4/.test(n))key='m4';else if(/нож|knife|дождь нож/.test(n)||f==='knife')key='knife';else if(/оруж|винтов|rifle/.test(n))key='ak';else{const keys=['ruby','pearl','emerald','sapphire','amethyst','fire','diamond','warmup'];let h=0;for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))>>>0;key=keys[h%keys.length];}
- return CASE_ART_CELLS[key]??CASE_ART_CELLS.ruby;
+ return `case-art/${CASE_ART_CELLS[key]??CASE_ART_CELLS.ruby}.jpg`;
 }
-function caseArtworkStyle(c){const art=caseArtwork(c);if(typeof art==='string')return `background-image:url("${escapeHtml(art)}");background-size:contain;background-position:center;background-repeat:no-repeat`;const col=art%5,row=Math.floor(art/5);return `background-image:url("case-art-sprite.jpg");background-size:500% 400%;background-position:${col*25}% ${row*100/3}%;background-repeat:no-repeat`;}
-function setCaseArtwork(el,art){if(!el)return;if(typeof art==='string'){el.style.backgroundImage=`url(${JSON.stringify(art)})`;el.style.backgroundSize='contain';el.style.backgroundPosition='center';}else{const col=art%5,row=Math.floor(art/5);el.style.backgroundImage='url("case-art-sprite.jpg")';el.style.backgroundSize='500% 400%';el.style.backgroundPosition=`${col*25}% ${row*100/3}%`;}el.style.backgroundRepeat='no-repeat';}
+function caseArtworkStyle(c){const art=caseArtwork(c);return `background-image:url("${escapeHtml(art)}");background-size:contain;background-position:center;background-repeat:no-repeat`;}
+function setCaseArtwork(el,art){if(!el)return;el.style.backgroundImage=`url(${JSON.stringify(art)})`;el.style.backgroundSize='contain';el.style.backgroundPosition='center';el.style.backgroundRepeat='no-repeat';}
 function renderCases(){
  const host=document.getElementById('caseSections');if(!host)return;
  const q=(document.getElementById('caseSearch')?.value||'').trim().toLowerCase();
@@ -1664,4 +1664,9 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 .case-stage.case-opening .case-stage-art{animation:caseFloat .45s ease-in-out infinite alternate}
 .case-stage.case-won .case-stage-art{transform:scale(1.08);filter:drop-shadow(0 0 30px #ffe000aa)}
 @media(max-width:700px){.case-card-art .case-art-sprite{width:min(100%,105px);height:min(100%,105px)}.case-stage .case-stage-art{width:min(190px,72%)}}
+.case-card-art .case-art-sprite{width:min(100%,132px);height:min(100%,132px);background-size:contain!important}
+.case-stage .case-stage-art{width:min(340px,42vw);height:min(300px,78%);aspect-ratio:1;background-size:contain!important;background-position:center!important}
+.case-stage .case-drop-box{display:none!important}
+.case-stage.case-opening .case-stage-art{animation:yrCaseImageDrop 7.2s cubic-bezier(.18,.72,.2,1) both!important}
+@keyframes yrCaseImageDrop{0%{opacity:0;transform:translateY(-95px) scale(.65) rotate(-8deg);filter:drop-shadow(0 22px 20px #000d)}12%{opacity:1;transform:translateY(8px) scale(1.06) rotate(3deg)}18%{transform:translateY(0) scale(1) rotate(0)}28%,68%{transform:translateY(0) rotate(0)}31%,37%,43%,49%,55%,61%{transform:translateX(-3px) rotate(-1deg)}34%,40%,46%,52%,58%,64%{transform:translateX(3px) rotate(1deg)}78%{opacity:1;transform:translateY(0) scale(1.08);filter:drop-shadow(0 0 32px var(--case-accent,#ffe000))}88%,100%{opacity:0;transform:translateY(-18px) scale(1.22);filter:drop-shadow(0 0 42px var(--case-accent,#ffe000))}}
 </style>
