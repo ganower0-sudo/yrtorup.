@@ -1652,14 +1652,14 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 <style id="yrtorup-case-art-sprite">
 .case-card-art .case-art-sprite{display:block;position:relative;width:min(100%,132px);height:min(100%,132px);aspect-ratio:1;background-repeat:no-repeat;filter:drop-shadow(0 8px 10px #000b);transition:transform .25s ease,filter .25s ease}
 .case-card-art .case-art-sprite{mix-blend-mode:screen}
-.case-card:hover .case-art-sprite{transform:translateY(-3px) scale(1.045);filter:drop-shadow(0 12px 14px #000c)}
-.case-stage .case-stage-art{position:relative;z-index:1;display:block;width:min(250px,72%);height:auto;aspect-ratio:1;background-repeat:no-repeat;filter:drop-shadow(0 18px 22px #000d);transition:transform .3s ease}
-.case-stage .case-stage-art{mix-blend-mode:screen;width:min(360px,42vw);}
+.case-stage .case-stage-art{mix-blend-mode:screen;width:min(360px,42vw)}
 .case-stage{background:radial-gradient(ellipse at 50% 72%,color-mix(in srgb,var(--case-accent,#ffe000) 28%,transparent),transparent 45%),linear-gradient(145deg,#111722,#090c12 65%,#080a0e)!important}
 .case-stage .case-scene{background-image:radial-gradient(ellipse at 50% 72%,color-mix(in srgb,var(--case-accent,#ffe000) 48%,transparent),transparent 32%),radial-gradient(ellipse at 50% 54%,color-mix(in srgb,var(--case-accent,#ffe000) 18%,transparent),transparent 62%),linear-gradient(120deg,#0b1018,#161923 52%,#0a0d13)!important;background-size:cover!important;filter:none!important;opacity:1!important;transform:none!important}
 .case-stage .case-scene:before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 85%,transparent 0 18%,color-mix(in srgb,var(--case-accent,#ffe000) 28%,transparent) 18.2%,transparent 18.7%,transparent 28%,color-mix(in srgb,var(--case-accent,#ffe000) 18%,transparent) 28.2%,transparent 28.7%);opacity:.85}
 .case-stage .case-scene:after{content:"";position:absolute;left:50%;bottom:9%;width:min(78%,820px);height:27%;border:1px solid color-mix(in srgb,var(--case-accent,#ffe000) 52%,transparent);border-radius:50%;box-shadow:0 0 26px color-mix(in srgb,var(--case-accent,#ffe000) 28%,transparent),inset 0 0 24px color-mix(in srgb,var(--case-accent,#ffe000) 16%,transparent);transform:translateX(-50%);animation:yrCaseScenePulse 2.6s ease-in-out infinite alternate}
 @keyframes yrCaseScenePulse{from{opacity:.4;transform:translateX(-50%) scale(.96)}to{opacity:.95;transform:translateX(-50%) scale(1.025)}}
+.case-card:hover .case-art-sprite{transform:translateY(-3px) scale(1.045);filter:drop-shadow(0 12px 14px #000c)}
+.case-stage .case-stage-art{position:relative;z-index:1;display:block;width:min(250px,72%);height:auto;aspect-ratio:1;background-repeat:no-repeat;filter:drop-shadow(0 18px 22px #000d);transition:transform .3s ease}
 .case-stage:not(.case-opening):not(.case-won):not(.case-instant) .case-drop-box{opacity:0!important;animation:none!important}
 .case-stage.case-opening .case-stage-art{animation:caseFloat .45s ease-in-out infinite alternate}
 .case-stage.case-won .case-stage-art{transform:scale(1.08);filter:drop-shadow(0 0 30px #ffe000aa)}
