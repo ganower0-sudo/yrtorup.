@@ -434,7 +434,7 @@ input:focus,select:focus{outline:1px solid #ffe000;border-color:#ffe000}
 #profileSkins .profile-sell-btn span{font-size:28px;line-height:1;font-weight:1000}
 #profileSkins .profile-action-buttons button:hover{filter:brightness(1.12);transform:translateY(-1px)}
 </style></head><body>
-<header class="top"><button class="brand" onclick="showPage('upgrade')"><span class="logo">Y</span> YRTORUP</button><nav class="nav"><button class="active" data-page="upgrade" onclick="showPage('upgrade')">Апгрейд</button><button data-page="inventory" onclick="showPage('inventory')">Инвентарь</button><button data-page="profilePage" onclick="showPage('profilePage')">Профиль</button><button data-page="casesPage" onclick="showPage('casesPage')">Кейсы</button></nav><button class="topup-button" type="button" onclick="notify('ПОПОЛНЕНИЕ БАЛАНСА ПОКА НЕДОСТУПНО В ДЕМО-ВЕРСИИ.')">ПОПОЛНИТЬ</button><div class="balance"><small>БАЛАНС · ИНВЕНТАРЬ</small><b id="balance">500 000 ₽</b><small id="inventoryValue" style="color:var(--green)">СКИНЫ: 0 ₽</small></div><button class="profile" id="googleAuthButton" onclick="handleGoogleButton()" title="Войти через Google"><img id="topAvatar" src="https://placehold.co/64x64/25262a/ffe000?text=Y" alt="Аватар"><span class="auth-label" id="topAuthLabel">Войти через Google</span></button><button class="admin-open" onclick="toggleAdmin()">⚙ АДМИН</button></header>
+<header class="top"><button class="brand" onclick="showPage('upgrade')"><span class="logo">Y</span> YRTORUP</button><nav class="nav"><button class="active" data-page="upgrade" onclick="showPage('upgrade')">Апгрейд</button><button data-page="inventory" onclick="showPage('inventory')">Инвентарь</button><button data-page="profilePage" onclick="showPage('profilePage')">Профиль</button><button data-page="casesPage" onclick="showPage('casesPage')">Кейсы</button></nav><button class="topup-button" type="button" onclick="openTopupModal()">ПОПОЛНИТЬ</button><div class="balance"><small>БАЛАНС · ИНВЕНТАРЬ</small><b id="balance">500 000 ₽</b><small id="inventoryValue" style="color:var(--green)">СКИНЫ: 0 ₽</small></div><button class="profile" id="googleAuthButton" onclick="handleGoogleButton()" title="Войти через Google"><img id="topAvatar" src="https://placehold.co/64x64/25262a/ffe000?text=Y" alt="Аватар"><span class="auth-label" id="topAuthLabel">Войти через Google</span></button><button class="admin-open" onclick="toggleAdmin()">⚙ АДМИН</button></header>
 <aside class="rail"><div class="rail-title">● ПОСЛЕДНИЕ АПГРЕЙДЫ</div><div id="railItems"></div></aside>
 <div class="layout"><div class="brand-center"><span>⌃</span> YRTORUP</div>
 <section class="page active" id="upgrade"><div class="main-grid">
@@ -1594,6 +1594,51 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
 }
 </style>
+
+<style>
+.topup-modal{position:fixed;inset:0;z-index:13000;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}
+.topup-modal.open{display:flex}
+.topup-card{position:relative;width:min(420px,100%);background:linear-gradient(155deg,#1d1e22,#101114);border:1px solid #4b4520;border-radius:14px;padding:22px;box-shadow:0 24px 80px #000c;color:#eee}
+.topup-card h2{margin:0 0 7px;color:var(--yellow);font-size:20px}
+.topup-card p{margin:0 0 16px;color:#a5a6ad;font-size:11px;line-height:1.5}
+.topup-close{position:absolute;right:12px;top:10px;background:#292a2f;color:#eee;border:1px solid #414249;border-radius:6px;width:30px;height:30px;font-size:19px}
+.topup-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.topup-options button{background:#202126;border:1px solid #3a3b40;color:#eee;border-radius:7px;padding:12px;font-weight:900}
+.topup-options button.selected{border-color:var(--yellow);background:#332d0b;color:var(--yellow);box-shadow:inset 0 0 0 1px #ffe00055}
+.topup-custom{display:block;color:#b9bac0;font-size:10px;font-weight:800;margin:12px 0 6px}
+.topup-custom input{width:100%;background:#101114;border:1px solid #3a3b40;border-radius:7px;padding:11px;color:white}
+.topup-confirm{width:100%;margin-top:13px;background:linear-gradient(180deg,var(--yellow),var(--yellow2));border:0;border-radius:7px;padding:12px;color:#111;font-weight:1000}
+.topup-demo-note{font-size:9px!important;color:#777b84!important;text-align:center;margin:12px 0 0!important}
+</style>
+<div class="topup-modal" id="topupModal" aria-hidden="true" onclick="if(event.target===this)closeTopupModal()">
+ <div class="topup-card" role="dialog" aria-modal="true" aria-labelledby="topupTitle">
+  <button class="topup-close" type="button" onclick="closeTopupModal()" aria-label="Закрыть">×</button>
+  <h2 id="topupTitle">ПОПОЛНЕНИЕ БАЛАНСА</h2>
+  <p>Выбери сумму виртуальных рублей для демо-баланса YRTORUP.</p>
+  <div class="topup-options">
+   <button type="button" data-topup-amount="1000" onclick="selectTopupAmount(1000)">1 000 ₽</button>
+   <button type="button" data-topup-amount="5000" onclick="selectTopupAmount(5000)">5 000 ₽</button>
+   <button type="button" data-topup-amount="10000" onclick="selectTopupAmount(10000)">10 000 ₽</button>
+   <button type="button" data-topup-amount="50000" onclick="selectTopupAmount(50000)">50 000 ₽</button>
+  </div>
+  <label class="topup-custom" for="topupCustomAmount">ИЛИ ВВЕДИ СВОЮ СУММУ</label>
+  <input id="topupCustomAmount" type="number" min="1" max="10000000" step="1" placeholder="Например, 2500" oninput="selectCustomTopupAmount()">
+  <button class="topup-confirm" type="button" onclick="confirmTopup()">ПОПОЛНИТЬ</button>
+  <p class="topup-demo-note">ДЕМО-РЕЖИМ: ЭТО ВИРТУАЛЬНЫЕ РУБЛИ, РЕАЛЬНАЯ ОПЛАТА НЕ ПРОИЗВОДИТСЯ.</p>
+ </div>
+</div>
+<script>
+(function(){
+ let selectedTopupAmount=1000;
+ window.openTopupModal=function(){const m=document.getElementById('topupModal');if(!m)return;m.classList.add('open');m.setAttribute('aria-hidden','false');selectTopupAmount(1000);};
+ window.closeTopupModal=function(){const m=document.getElementById('topupModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}};
+ window.selectTopupAmount=function(amount){selectedTopupAmount=Math.max(1,Math.min(10000000,Math.floor(Number(amount)||1)));const input=document.getElementById('topupCustomAmount');if(input)input.value='';document.querySelectorAll('[data-topup-amount]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.topupAmount)===selectedTopupAmount));};
+ window.selectCustomTopupAmount=function(){const input=document.getElementById('topupCustomAmount');const n=Math.floor(Number(input&&input.value)||0);selectedTopupAmount=Math.max(0,Math.min(10000000,n));document.querySelectorAll('[data-topup-amount]').forEach(b=>b.classList.remove('selected'));};
+ window.confirmTopup=function(){const input=document.getElementById('topupCustomAmount');const amount=Math.floor(Number(input&&input.value)||selectedTopupAmount||0);if(!Number.isFinite(amount)||amount<1||amount>10000000){if(typeof notify==='function')notify('ВВЕДИ СУММУ ОТ 1 ДО 10 000 000 ₽.');return;}if(typeof balance==='undefined'){if(typeof notify==='function')notify('НЕ УДАЛОСЬ ПОЛУЧИТЬ ДОСТУП К БАЛАНСУ.');return;}balance+=amount;if(typeof setBalance==='function')setBalance();if(typeof saveState==='function')saveState();if(typeof saveCloudUserState==='function')saveCloudUserState();closeTopupModal();if(typeof notify==='function')notify('ДЕМО-БАЛАНС ПОПОЛНЕН НА '+(typeof money==='function'?money(amount):amount+' ₽')+'.');};
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTopupModal();});
+})();
+</script>
+
 </body></html>
 
 <style>
