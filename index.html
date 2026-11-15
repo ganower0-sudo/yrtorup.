@@ -839,7 +839,7 @@ function finishCaseBatch(c,results){
  try{localStorage.setItem(accountStorageKey()+':case-history',JSON.stringify(caseOpenHistory));}catch(e){}
  saveState();renderAll();renderCases();
  const batch=document.getElementById('caseBatchResults');
- window.yrtorupLastCaseDropIds=results.map((r,i)=>'case-drop-'+(window.yrtorupCaseBatchStamp||'')+'-'+i);
+ // ID предметов уже сохранены выше с batchStamp; не перезаписываем их.
  batch.innerHTML=results.map((r,i)=>`<div class="case-batch-result"><img loading="lazy" src="${escapeHtml(caseImage(r))}" alt=""><b title="${escapeHtml(r.name)}">${i+1}. ${escapeHtml(r.name)}</b><small>${money(r.price)}</small></div>`).join('')+`<div class="case-drop-actions"><button type="button" class="case-sell-all-drop" onclick="sellLastCaseDrop()">💰 ПРОДАТЬ ВЕСЬ ДРОП · ${money(results.reduce((sum,x)=>sum+Number(x.price||0),0))}</button></div>`;
  batch.classList.add('show');
   const first=results[0];if(first){setCaseArtwork(document.getElementById('caseStageImage'),caseImage(first)||caseArtwork(c));document.getElementById('caseResultImage').src=caseImage(first);document.getElementById('caseResultName').textContent=results.length===1?first.name:'Выпало предметов: '+results.length;document.getElementById('caseResultPrice').textContent='Общая стоимость: '+money(results.reduce((a,x)=>a+Number(x.price||0),0));document.getElementById('caseResultPanel').classList.add('show');}
