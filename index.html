@@ -433,7 +433,19 @@ input:focus,select:focus{outline:1px solid #ffe000;border-color:#ffe000}
 #profileSkins .profile-sell-btn{background:#ffcc00;border:1px solid #ffe45a;color:#080808}
 #profileSkins .profile-sell-btn span{font-size:28px;line-height:1;font-weight:1000}
 #profileSkins .profile-action-buttons button:hover{filter:brightness(1.12);transform:translateY(-1px)}
-</style></head><body>
+</style><style id="hide-page-intro-headings">
+/* Скрываем верхние вводные заголовки страниц (надпись, крупное название и описание),
+   сохраняя кнопки, баланс и остальное содержимое шапок. */
+.page > .page-title > div:first-child {
+  display: none !important;
+}
+.page > .page-title {
+  min-height: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 12px !important;
+}
+</style>
+</head><body>
 <header class="top"><button class="brand" onclick="showPage('upgrade')"><span class="logo">Y</span> YRTORUP</button><nav class="nav"><button class="active" data-page="upgrade" onclick="showPage('upgrade')">Апгрейд</button><button data-page="inventory" onclick="showPage('inventory')">Инвентарь</button><button data-page="profilePage" onclick="showPage('profilePage')">Профиль</button><button data-page="casesPage" onclick="showPage('casesPage')">Кейсы</button></nav><button class="topup-button" type="button" onclick="openTopupModal()">ПОПОЛНИТЬ</button><div class="balance"><small>БАЛАНС · ИНВЕНТАРЬ</small><b id="balance">500 000 ₽</b><small id="inventoryValue" style="color:var(--green)">СКИНЫ: 0 ₽</small></div><button class="profile" id="googleAuthButton" onclick="handleGoogleButton()" title="Войти через Google"><img id="topAvatar" src="https://placehold.co/64x64/25262a/ffe000?text=Y" alt="Аватар"><span class="auth-label" id="topAuthLabel">Войти через Google</span></button><button class="admin-open" onclick="toggleAdmin()">⚙ АДМИН</button></header>
 <aside class="rail"><div class="rail-title">● ПОСЛЕДНИЕ АПГРЕЙДЫ</div><div id="railItems"></div></aside>
 <div class="layout"><div class="brand-center"><span>⌃</span> YRTORUP</div>
