@@ -472,7 +472,7 @@ input:focus,select:focus{outline:1px solid #ffe000;border-color:#ffe000}
 <section class="page" id="collectionsPage"><div class="page-title"><div><div class="rarity">ТВОИ ПРЕДМЕТЫ</div><h1>КОЛЛЕКЦИИ СКИНОВ</h1><p style="color:#898b93">Автоматические подборки по типам оружия и редким предметам из твоего инвентаря.</p></div></div><div id="collectionsGrid" class="collections-grid"></div></section>
 <section class="page" id="livePage"><div class="page-title"><div><div class="rarity">АКТИВНОСТЬ YRTORUP</div><h1>ЖИВАЯ ЛЕНТА ОТКРЫТИЙ</h1><p style="color:#898b93">Твои последние открытия и общие публичные апгрейды сообщества, если они доступны.</p></div><button class="secondary" style="width:auto" onclick="renderLiveFeed()">ОБНОВИТЬ</button></div><div id="liveFeedList" class="live-feed-list"></div></section>
 <section class="page" id="history"><div class="page-title"><div><div class="rarity">ИСТОРИЯ ТВОЕЙ СЕССИИ</div><h1>ИСТОРИЯ АПГРЕЙДОВ</h1></div><button class="secondary" style="width:auto" onclick="clearHistory()">ОЧИСТИТЬ</button></div><div id="historyPage" class="empty-big">Пока нет операций. Купи скин и попробуй апгрейд.</div><div class="page-title" style="margin-top:24px"><div><div class="rarity">СООБЩЕСТВО</div><h2>ПОСЛЕДНИЕ АПГРЕЙДЫ ВСЕХ ИГРОКОВ</h2></div><span class="meta" id="globalFeedStatus">Подключение…</span></div><div id="globalHistoryPage" class="empty-big">Загружаем общую ленту…</div></section>
-<section class="page" id="casesPage"><div class="page-title"><div><div class="rarity">КОЛЛЕКЦИЯ YRTORUP</div><h1>КЕЙСЫ</h1><p style="color:#898b93">70 тематических кейсов. Открытие работает в деморежиме за виртуальные рубли.</p></div><div><small style="color:#888">ТВОЙ БАЛАНС</small><h2 id="casesBalance" style="color:var(--yellow);margin:4px 0">500 000 ₽</h2></div></div><div class="case-toolbar"><button id="createCaseButton" type="button" onclick="openCaseCreator()" style="display:none;background:linear-gradient(180deg,#ffe75a,#ffbd00);color:#171006;border:0;border-radius:7px;padding:10px 14px;font-weight:1000;box-shadow:0 0 16px #ffbd0033">＋ СОЗДАТЬ КЕЙС</button><input id="caseSearch" placeholder="Найти кейс…" oninput="renderCases()"><button id="caseFavoritesToggle" class="case-favorite-toggle" type="button" onclick="toggleCaseFavoritesView()" title="Показать избранные кейсы">♡ ИЗБРАННОЕ</button><select id="caseSort" onchange="renderCases()"><option value="default">По подборке</option><option value="asc">Сначала дешёвые</option><option value="desc">Сначала дорогие</option></select><span id="caseCount">70 кейсов</span></div><div id="caseSections" class="case-sections"></div></section>
+<section class="page" id="casesPage"><div class="page-title"><div><div class="rarity">КОЛЛЕКЦИЯ YRTORUP</div><h1>КЕЙСЫ</h1><p style="color:#898b93">70 тематических кейсов. Открытие работает в деморежиме за виртуальные рубли.</p></div><div><small style="color:#888">ТВОЙ БАЛАНС</small><h2 id="casesBalance" style="color:var(--yellow);margin:4px 0">500 000 ₽</h2></div></div><div class="case-toolbar"><button id="createCaseButton" type="button" onclick="openCaseCreator()" style="display:none;background:linear-gradient(180deg,#ffe75a,#ffbd00);color:#171006;border:0;border-radius:7px;padding:10px 14px;font-weight:1000;box-shadow:0 0 16px #ffbd0033">＋ СОЗДАТЬ КЕЙС</button><input id="caseSearch" placeholder="Найти кейс…" oninput="renderCases()"><button id="caseFavoritesToggle" class="case-favorite-toggle" type="button" onclick="toggleCaseFavoritesView()" title="Показать избранные кейсы">♡ ИЗБРАННОЕ</button><select id="caseSort" onchange="renderCases()"><option value="default">По подборке</option><option value="asc">Сначала дешёвые</option><option value="desc">Сначала дорогие</option></select><span id="caseCount">70 кейсов</span></div><div id="caseSections" class="case-sections"></div><div class="case-history-wrap"><h2>ПОСЛЕДНИЕ ОТКРЫТИЯ</h2><div id="caseHistory" class="case-history empty-big">Ты ещё не открывал кейсы.</div></div></section>
 <footer class="footer"><span>YRTORUP · СОЗДАН ДЛЯ ЛЮБИТЕЛЕЙ СКИНОВ CS2</span><span>НЕ СВЯЗАН С VALVE ИЛИ STEAM</span></footer></div>
 
 <aside class="admin-panel" id="adminPanel" aria-label="Панель администратора">
@@ -774,8 +774,30 @@ function getCaseFavorites(){
 }
 let caseFavoriteIds=getCaseFavorites();
 function saveCaseFavorites(){
- try{localStorage.setItem(accountStorageKey()+':case-favorites',JSON.stringify([...caseFavoriteIds]));}
- catch(e){notify('Не удалось сохранить избранные кейсы.');}
+ const ids=[...caseFavoriteIds];
+ try{localStorage.setItem(accountStorageKey()+':case-favorites',JSON.stringify(ids));}
+ catch(e){notify('Не удалось сохранить избранные кейсы в браузере.');}
+ if(firestoreReady()&&yrtorupGoogleUser){
+  yrtorupDb.collection('users').doc(yrtorupGoogleUser.uid)
+   .set({favoriteCases:ids},{merge:true})
+   .catch(e=>{console.warn('Cloud favorites save failed:',e);notify('Не удалось сохранить избранное в облаке. Проверь правила Firestore.');});
+ }
+}
+async function loadCloudCaseFavorites(user){
+ if(!user||!firestoreReady())return;
+ try{
+  const ref=yrtorupDb.collection('users').doc(user.uid);
+  const snap=await ref.get();
+  if(snap.exists&&Array.isArray(snap.data().favoriteCases)){
+   caseFavoriteIds=new Set(snap.data().favoriteCases.map(String));
+  }else{
+   const local=getCaseFavorites();
+   caseFavoriteIds=local;
+   await ref.set({favoriteCases:[...local]},{merge:true});
+  }
+  try{localStorage.setItem(accountStorageKey()+':case-favorites',JSON.stringify([...caseFavoriteIds]));}catch(e){}
+  renderCases();
+ }catch(e){console.warn('Cloud favorites load failed:',e);notify('Не удалось загрузить избранное из облака.');}
 }
 function toggleCaseFavorite(id){
  id=String(id);
@@ -1309,6 +1331,8 @@ function initYrtorupFirebaseAuth() {
     firebase.auth().getRedirectResult().catch(e => { console.warn('Google redirect result:', e); if (e.code === 'auth/unauthorized-domain') notify('Домен yrtorup.onrender.com не разрешён в Firebase Authentication.'); else notify('Ошибка возврата из Google: ' + (e.message || e)); });
     firebase.auth().onAuthStateChanged(async user => {
       yrtorupGoogleUser=user||null;
+      if(user) await loadCloudCaseFavorites(user);
+      else { caseFavoriteIds=getCaseFavorites(); renderCases(); }
       loadPersonalCreatedCases();
       loadState();
       renderCases();
